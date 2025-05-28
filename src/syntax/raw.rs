@@ -1,18 +1,20 @@
+use super::KetState;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypeS<S> {
+pub enum TypeR<S> {
     Unitary(usize, S),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum TermS<S> {
+pub enum TermR<S> {
     Comp {
-        first: Box<TermS<S>>,
-        second: Box<TermS<S>>,
+        first: Box<TermR<S>>,
+        second: Box<TermR<S>>,
         span: S,
     },
     Tensor {
-        first: Box<TermS<S>>,
-        second: Box<TermS<S>>,
+        first: Box<TermR<S>>,
+        second: Box<TermR<S>>,
         span: S,
     },
     Id {
@@ -24,8 +26,8 @@ pub enum TermS<S> {
         span: S,
     },
     IfLet {
-        pattern: PatternS<S>,
-        inner: Box<TermS<S>>,
+        pattern: PatternR<S>,
+        inner: Box<TermR<S>>,
         span: S,
     },
     Hadamard {
@@ -33,29 +35,21 @@ pub enum TermS<S> {
     },
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum KetState {
-    Zero,
-    One,
-    Plus,
-    Minus,
-}
-
 #[derive(Clone, Debug, PartialEq)]
-pub enum PatternS<S> {
+pub enum PatternR<S> {
     Comp {
-        first: Box<PatternS<S>>,
-        second: Box<PatternS<S>>,
+        first: Box<PatternR<S>>,
+        second: Box<PatternR<S>>,
         span: S,
     },
     Tensor {
-        first: Box<PatternS<S>>,
-        second: Box<PatternS<S>>,
+        first: Box<PatternR<S>>,
+        second: Box<PatternR<S>>,
         span: S,
     },
     Ket {
         states: Vec<KetState>,
         span: S,
     },
-    Unitary(Box<TermS<S>>),
+    Unitary(Box<TermR<S>>),
 }
