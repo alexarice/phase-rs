@@ -1,1 +1,1 @@
-if let |1> then if let H . |1> then ph(-1pi)
+if let (if let (if let |1> then ph(0.5pi)) . |-> then ph(0.25pi)) . |1> then ph(1pi)

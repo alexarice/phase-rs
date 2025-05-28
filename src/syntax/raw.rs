@@ -3,18 +3,17 @@ use super::KetState;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeR<S> {
     Unitary(usize, S),
+    Pattern(usize, usize, S),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TermR<S> {
     Comp {
-        first: Box<TermR<S>>,
-        second: Box<TermR<S>>,
+        terms: Vec<TermR<S>>,
         span: S,
     },
     Tensor {
-        first: Box<TermR<S>>,
-        second: Box<TermR<S>>,
+        terms: Vec<TermR<S>>,
         span: S,
     },
     Id {
@@ -37,19 +36,8 @@ pub enum TermR<S> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum PatternR<S> {
-    Comp {
-        first: Box<PatternR<S>>,
-        second: Box<PatternR<S>>,
-        span: S,
-    },
-    Tensor {
-        first: Box<PatternR<S>>,
-        second: Box<PatternR<S>>,
-        span: S,
-    },
-    Ket {
-        states: Vec<KetState>,
-        span: S,
-    },
+    Comp { patterns: Vec<PatternR<S>>, span: S },
+    Tensor { patterns: Vec<PatternR<S>>, span: S },
+    Ket { states: Vec<KetState>, span: S },
     Unitary(Box<TermR<S>>),
 }
