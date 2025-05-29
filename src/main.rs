@@ -1,13 +1,8 @@
-use std::io;
-use std::io::Read;
-use std::path::PathBuf;
+use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
 use phase_rs::parsing::command;
-use winnow::LocatingSlice;
-use winnow::Parser;
-use winnow::ascii::multispace0;
-use winnow::combinator::terminated;
+use winnow::{LocatingSlice, Parser, ascii::multispace0, combinator::terminated};
 
 /// Interpreter for "it's just a phase"
 #[derive(clap::Parser)]

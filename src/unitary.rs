@@ -1,6 +1,7 @@
+use std::f64::consts::{FRAC_1_SQRT_2, PI};
+
 use faer::{Mat, mat};
 use num_complex::Complex;
-use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
 const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
 

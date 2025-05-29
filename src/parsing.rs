@@ -1,17 +1,19 @@
 use std::ops::Range;
 
-use winnow::LocatingSlice;
-use winnow::Parser;
-use winnow::Result;
-use winnow::ascii::alphanumeric1;
-use winnow::ascii::{dec_uint, float, multispace0, multispace1};
-use winnow::combinator::separated;
-use winnow::combinator::{alt, delimited, preceded, repeat, seq};
-use winnow::error::StrContextValue;
+use winnow::{
+    LocatingSlice, Parser, Result,
+    ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
+    combinator::{alt, delimited, preceded, repeat, separated, seq},
+    error::StrContextValue,
+};
 
-use crate::command::Command;
-use crate::syntax::KetState;
-use crate::syntax::raw::{PatternR, TermR, TypeR};
+use crate::{
+    command::Command,
+    syntax::{
+        KetState,
+        raw::{PatternR, TermR, TypeR},
+    },
+};
 
 pub fn qreg(input: &mut LocatingSlice<&str>) -> Result<usize> {
     preceded('q', dec_uint).parse_next(input)
