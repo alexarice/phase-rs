@@ -32,6 +32,10 @@ pub enum TermR<S> {
     Hadamard {
         span: S,
     },
+    Gate {
+        name: String,
+        span: S,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

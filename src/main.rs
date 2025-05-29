@@ -3,7 +3,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use float_pretty_print::PrettyPrintFloat;
-use phase_rs::parsing::tm;
+use phase_rs::parsing::command;
 use winnow::LocatingSlice;
 use winnow::Parser;
 use winnow::ascii::multispace0;
@@ -18,11 +18,11 @@ struct Args {
 }
 
 fn parse_and_check(src: &str) -> Result<(), String> {
-    let parsed = terminated(tm, multispace0)
+    let parsed = terminated(command, multispace0)
         .parse(LocatingSlice::new(src))
         .map_err(|e| format!("{e}"))?;
     println!("Parsed: {parsed:?}");
-    let checked = parsed.check().map_err(|e| format!("{e:?}"))?;
+    let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
     println!("Checked: {checked:?}");
     let unitary = checked.to_unitary();
     for x in unitary.row_iter() {
@@ -31,7 +31,7 @@ fn parse_and_check(src: &str) -> Result<(), String> {
             x.iter()
                 .map(|x| {
                     match (x.re.abs() > 0.000001, x.im.abs() > 0.000001) {
-                        (false, false) => format!("0.0"),
+                        (false, false) => "0.0".to_owned(),
                         (true, false) => format!("{}", PrettyPrintFloat(x.re)),
                         (false, true) => format!("{}i", PrettyPrintFloat(x.im)),
                         (true, true) => {

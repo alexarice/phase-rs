@@ -34,6 +34,10 @@ pub enum TermT {
         inner: Box<TermT>,
     },
     Hadamard,
+    Gate {
+        name: String,
+        def: Box<TermT>,
+    },
 }
 
 impl TermT {
@@ -44,6 +48,7 @@ impl TermT {
             TermT::Phase { .. } => TermType(0),
             TermT::IfLet { pattern, .. } => TermType(pattern.get_type().0),
             TermT::Hadamard => TermType(1),
+            TermT::Gate { def, .. } => def.get_type(),
         }
     }
 }

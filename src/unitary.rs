@@ -35,6 +35,7 @@ impl TermT {
             TermT::Hadamard => {
                 mat![[CISQRT2, CISQRT2], [CISQRT2, -CISQRT2]]
             }
+            TermT::Gate { def, .. } => def.to_unitary(),
         }
     }
 }
@@ -65,7 +66,7 @@ impl PatternT {
                 let i = patterns_iter.next().unwrap();
                 patterns_iter.fold(i, |(i1, p1), (i2, p2)| {
                     (
-                        (&i1).kron(i2),
+                        i1.kron(i2),
                         p1.kron(Mat::<Complex<f64>>::identity(p2.nrows(), p2.nrows()))
                             + (&i1 * i1.adjoint()).kron(p2),
                     )

@@ -3,11 +3,13 @@ use std::ops::Range;
 use winnow::LocatingSlice;
 use winnow::Parser;
 use winnow::Result;
+use winnow::ascii::alphanumeric1;
 use winnow::ascii::{dec_uint, float, multispace0, multispace1};
 use winnow::combinator::separated;
 use winnow::combinator::{alt, delimited, preceded, repeat, seq};
 use winnow::error::StrContextValue;
 
+use crate::command::Command;
 use crate::syntax::KetState;
 use crate::syntax::raw::{PatternR, TermR, TypeR};
 
@@ -64,7 +66,8 @@ fn atom(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
 	preceded("id", dec_uint).with_span().map(|(qubits, span)| TermR::Id { qubits, span }),
 	delimited(("ph(", multispace0), float, (multispace0, "pi", multispace0, ")")).with_span().map(|(angle, span)| TermR::Phase { angle, span }),
 	"H".span().map(|span| TermR::Hadamard { span }),
-	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom).with_span().map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span })
+	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom).with_span().map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span }),
+	identifier.with_span().map(|(name, span)| TermR::Gate { name, span })
     )).parse_next(input)
 }
 
@@ -120,4 +123,18 @@ fn pattern_atom(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>
         tm.map(|x| PatternR::Unitary(Box::new(x))),
     ))
     .parse_next(input)
+}
+
+fn identifier(input: &mut LocatingSlice<&str>) -> Result<String> {
+    alphanumeric1.map(|s: &str| s.to_owned()).parse_next(input)
+}
+
+fn gate(input: &mut LocatingSlice<&str>) -> Result<(String, TermR<Range<usize>>)> {
+    seq!(_: ("gate", multispace1), identifier, _: (multispace0, "=", multispace0), tm, _: (multispace0, ",", multispace0)).parse_next(input)
+}
+
+pub fn command(input: &mut LocatingSlice<&str>) -> Result<Command<Range<usize>>> {
+    let gates = repeat(0.., gate).parse_next(input)?;
+    let term = tm.parse_next(input)?;
+    Ok(Command { gates, term })
 }

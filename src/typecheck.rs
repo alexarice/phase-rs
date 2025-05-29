@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::syntax::{
     raw::{PatternR, TermR},
     typed::{PatternT, PatternType, TermT, TermType},
@@ -23,19 +25,26 @@ pub enum TypeCheckError<S> {
         p2: PatternR<S>,
         ty2: PatternType,
     },
+    UnknownSymbol {
+        name: String,
+        span: S,
+    },
 }
 
+#[derive(Default)]
+pub struct Env(pub(crate) HashMap<String, TermT>);
+
 impl<S: Clone> TermR<S> {
-    pub fn check(&self) -> Result<TermT, TypeCheckError<S>> {
+    pub fn check(&self, env: &Env) -> Result<TermT, TypeCheckError<S>> {
         match self {
             TermR::Comp { terms, .. } => {
                 let mut term_iter = terms.iter();
                 let mut raw = term_iter.next().unwrap();
-                let t = raw.check()?;
+                let t = raw.check(env)?;
                 let ty1 = t.get_type();
                 let mut v = vec![t];
                 for r in term_iter {
-                    let term = r.check()?;
+                    let term = r.check(env)?;
                     let ty2 = term.get_type();
                     if ty1 != ty2 {
                         return Err(TypeCheckError::TypeMismatch {
@@ -54,7 +63,10 @@ impl<S: Clone> TermR<S> {
                 })
             }
             TermR::Tensor { terms, .. } => Ok(TermT::Tensor {
-                terms: terms.iter().map(TermR::check).collect::<Result<_, _>>()?,
+                terms: terms
+                    .iter()
+                    .map(|t| t.check(env))
+                    .collect::<Result<_, _>>()?,
             }),
             TermR::Id { qubits, .. } => Ok(TermT::Comp {
                 terms: vec![],
@@ -62,8 +74,8 @@ impl<S: Clone> TermR<S> {
             }),
             TermR::Phase { angle, .. } => Ok(TermT::Phase { angle: *angle }),
             TermR::IfLet { pattern, inner, .. } => {
-                let p = pattern.check()?;
-                let t = inner.check()?;
+                let p = pattern.check(env)?;
+                let t = inner.check(env)?;
                 let pty = p.get_type();
                 let tty = t.get_type();
                 if pty.1 != tty.0 {
@@ -81,21 +93,34 @@ impl<S: Clone> TermR<S> {
                 }
             }
             TermR::Hadamard { .. } => Ok(TermT::Hadamard),
+            TermR::Gate { name, span } => {
+                if let Some(def) = env.0.get(name) {
+                    Ok(TermT::Gate {
+                        name: name.clone(),
+                        def: Box::new(def.clone()),
+                    })
+                } else {
+                    Err(TypeCheckError::UnknownSymbol {
+                        name: name.to_owned(),
+                        span: span.clone(),
+                    })
+                }
+            }
         }
     }
 }
 
 impl<S: Clone> PatternR<S> {
-    pub fn check(&self) -> Result<PatternT, TypeCheckError<S>> {
+    pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         match self {
             PatternR::Comp { patterns, .. } => {
                 let mut pattern_iter = patterns.iter();
                 let mut raw = pattern_iter.next().unwrap();
-                let p = raw.check()?;
+                let p = raw.check(env)?;
                 let mut ty1 = p.get_type();
                 let mut v = vec![p];
                 for r in pattern_iter {
-                    let pattern = r.check()?;
+                    let pattern = r.check(env)?;
                     let ty2 = pattern.get_type();
                     if ty1.1 != ty2.0 {
                         return Err(TypeCheckError::PatternTypeMismatch {
@@ -114,7 +139,7 @@ impl<S: Clone> PatternR<S> {
             PatternR::Tensor { patterns, .. } => Ok(PatternT::Tensor {
                 patterns: patterns
                     .iter()
-                    .map(PatternR::check)
+                    .map(|p| p.check(env))
                     .collect::<Result<_, _>>()?,
             }),
             PatternR::Ket { states, .. } => Ok(PatternT::Tensor {
@@ -123,7 +148,7 @@ impl<S: Clone> PatternR<S> {
                     .map(|&state| PatternT::Ket { state })
                     .collect(),
             }),
-            PatternR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check()?))),
+            PatternR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check(env)?))),
         }
     }
 }
