@@ -16,10 +16,12 @@ fn parse_and_check(src: &str) -> Result<(), String> {
     let parsed = terminated(command, multispace0)
         .parse(LocatingSlice::new(src))
         .map_err(|e| format!("{e}"))?;
-    println!("Parsed: {parsed:?}");
+    println!("Parsed: {parsed:#?}");
     let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
-    println!("Checked: {checked:?}");
-    let unitary = checked.to_unitary();
+    println!("Checked: {checked:#?}");
+    let evalled = checked.eval();
+    println!("Checked: {evalled:#?}");
+    let unitary = evalled.to_unitary();
     for x in unitary.row_iter() {
         println!(
             "[ {} ]",

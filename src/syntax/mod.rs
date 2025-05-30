@@ -1,3 +1,4 @@
+pub mod normal;
 pub mod raw;
 pub mod typed;
 

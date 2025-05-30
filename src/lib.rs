@@ -1,4 +1,5 @@
 pub mod command;
+pub mod eval;
 pub mod parsing;
 pub mod syntax;
 pub mod typecheck;
