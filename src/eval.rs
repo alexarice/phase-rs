@@ -1,7 +1,19 @@
 use crate::syntax::{
+    Phase,
     normal::{AtomN, PatternN, TermN},
     typed::{PatternT, TermT},
 };
+
+impl Phase {
+    pub fn eval(&self) -> f64 {
+        match self {
+            Phase::Angle(a) => *a,
+            Phase::MinusOne => 1.0,
+            Phase::Imag => 0.5,
+            Phase::NegImag => 1.5,
+        }
+    }
+}
 
 impl TermT {
     pub fn eval(&self) -> TermN {
@@ -17,8 +29,10 @@ impl TermT {
                 terms: vec![],
                 ty: *ty,
             },
-            TermT::Phase { angle } => TermN::Atom {
-                atom: AtomN::Phase { angle: *angle },
+            TermT::Phase { phase } => TermN::Atom {
+                atom: AtomN::Phase {
+                    angle: phase.eval(),
+                },
             },
             TermT::IfLet { pattern, inner } => TermN::Atom {
                 atom: AtomN::IfLet {

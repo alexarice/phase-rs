@@ -72,7 +72,7 @@ impl<S: Clone> TermR<S> {
                 terms: vec![],
                 ty: *qubits,
             }),
-            TermR::Phase { angle, .. } => Ok(TermT::Phase { angle: *angle }),
+            TermR::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
             TermR::IfLet { pattern, inner, .. } => {
                 let p = pattern.check(env)?;
                 let t = inner.check(env)?;

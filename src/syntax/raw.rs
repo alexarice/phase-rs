@@ -1,4 +1,4 @@
-use super::KetState;
+use super::{KetState, Phase};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeR<S> {
@@ -21,7 +21,7 @@ pub enum TermR<S> {
         span: S,
     },
     Phase {
-        angle: f64,
+        phase: Phase,
         span: S,
     },
     IfLet {

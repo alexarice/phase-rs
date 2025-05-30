@@ -1,6 +1,6 @@
 use std::iter::Sum;
 
-use super::KetState;
+use super::{KetState, Phase};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TermType(pub usize);
@@ -30,7 +30,7 @@ pub enum TermT {
         ty: usize,
     },
     Phase {
-        angle: f64,
+        phase: Phase,
     },
     IfLet {
         pattern: PatternT,

@@ -10,7 +10,7 @@ use winnow::{
 use crate::{
     command::Command,
     syntax::{
-        KetState,
+        KetState, Phase,
         raw::{PatternR, TermR, TypeR},
     },
 };
@@ -62,13 +62,28 @@ fn tensor(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
         .parse_next(input)
 }
 
+fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
+    alt((
+        "-1".value(Phase::MinusOne),
+        "i".value(Phase::Imag),
+        "-i".value(Phase::NegImag),
+        delimited(
+            ("ph(", multispace0),
+            float,
+            (multispace0, "pi", multispace0, ")"),
+        )
+        .map(Phase::Angle),
+    ))
+    .parse_next(input)
+}
+
 fn atom(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
     alt((
 	delimited(("(", multispace0), tm, (multispace0, ")")),
 	preceded("id", dec_uint).with_span().map(|(qubits, span)| TermR::Id { qubits, span }),
-	delimited(("ph(", multispace0), float, (multispace0, "pi", multispace0, ")")).with_span().map(|(angle, span)| TermR::Phase { angle, span }),
-	"H".span().map(|span| TermR::Hadamard { span }),
 	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom).with_span().map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span }),
+	phase.with_span().map(|(phase, span)| TermR::Phase { phase, span }),
+	"H".span().map(|span| TermR::Hadamard { span }),
 	identifier.with_span().map(|(name, span)| TermR::Gate { name, span })
     )).parse_next(input)
 }

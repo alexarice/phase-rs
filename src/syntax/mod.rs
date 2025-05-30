@@ -20,3 +20,11 @@ impl KetState {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Phase {
+    Angle(f64),
+    MinusOne,
+    Imag,
+    NegImag,
+}
