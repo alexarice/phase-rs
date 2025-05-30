@@ -1,2 +1,2 @@
-gate X = if let |-> then ph(1pi),
-if let |11> then i
+gate X = if let |-> then -1,
+if let |1> x id then X
