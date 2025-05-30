@@ -45,6 +45,7 @@ impl TermT {
                 atom: AtomN::Hadamard,
             },
             TermT::Gate { def, .. } => def.eval(),
+            TermT::Inverse { inner } => inner.eval().invert(),
         }
     }
 }

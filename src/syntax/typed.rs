@@ -41,6 +41,9 @@ pub enum TermT {
         name: String,
         def: Box<TermT>,
     },
+    Inverse {
+        inner: Box<TermT>,
+    },
 }
 
 impl TermT {
@@ -53,6 +56,7 @@ impl TermT {
             TermT::IfLet { pattern, .. } => TermType(pattern.get_type().0),
             TermT::Hadamard => TermType(1),
             TermT::Gate { def, .. } => def.get_type(),
+            TermT::Inverse { inner } => inner.get_type(),
         }
     }
 }

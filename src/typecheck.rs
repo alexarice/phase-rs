@@ -106,6 +106,12 @@ impl<S: Clone> TermR<S> {
                     })
                 }
             }
+            TermR::Inverse { inner, .. } => {
+                let inner_t = inner.check(env)?;
+                Ok(TermT::Inverse {
+                    inner: Box::new(inner_t),
+                })
+            }
         }
     }
 }

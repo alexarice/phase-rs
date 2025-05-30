@@ -1,2 +1,2 @@
 gate X = if let |-> then -1,
-if let |1> x id then X
+(if let |11> then i) ^ -1

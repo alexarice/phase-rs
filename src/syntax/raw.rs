@@ -36,6 +36,10 @@ pub enum TermR<S> {
         name: String,
         span: S,
     },
+    Inverse {
+        inner: Box<TermR<S>>,
+        span: S,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

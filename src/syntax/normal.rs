@@ -51,6 +51,21 @@ impl TermN {
             TermN::Atom { atom } => PatternN::Unitary(Box::new(atom)),
         }
     }
+
+    pub fn invert(self) -> TermN {
+        match self {
+            TermN::Comp { terms, ty } => TermN::Comp {
+                terms: terms.into_iter().rev().map(TermN::invert).collect(),
+                ty,
+            },
+            TermN::Tensor { terms } => TermN::Tensor {
+                terms: terms.into_iter().map(TermN::invert).collect(),
+            },
+            TermN::Atom { atom } => TermN::Atom {
+                atom: atom.invert(),
+            },
+        }
+    }
 }
 
 impl AtomN {
@@ -59,6 +74,18 @@ impl AtomN {
             AtomN::Phase { .. } => TermType(0),
             AtomN::IfLet { ty, .. } => TermType(*ty),
             AtomN::Hadamard => TermType(1),
+        }
+    }
+
+    pub fn invert(self) -> AtomN {
+        match self {
+            AtomN::Phase { angle } => AtomN::Phase { angle: -angle },
+            AtomN::IfLet { pattern, inner, ty } => AtomN::IfLet {
+                pattern,
+                inner: Box::new(inner.invert()),
+                ty,
+            },
+            AtomN::Hadamard => AtomN::Hadamard,
         }
     }
 }
