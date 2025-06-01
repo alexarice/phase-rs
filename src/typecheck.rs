@@ -173,3 +173,64 @@ impl<S: Clone> PatternR<S> {
         }
     }
 }
+
+impl TermT {
+    pub fn to_raw(&self) -> TermR<()> {
+        match self {
+            TermT::Comp { terms, .. } => TermR::Comp {
+                terms: terms.iter().map(TermT::to_raw).collect(),
+                span: (),
+            },
+            TermT::Tensor { terms } => TermR::Tensor {
+                terms: terms.iter().map(TermT::to_raw).collect(),
+                span: (),
+            },
+            TermT::Id { ty } => TermR::Id {
+                qubits: ty.0,
+                span: (),
+            },
+            TermT::Phase { phase } => TermR::Phase {
+                phase: *phase,
+                span: (),
+            },
+            TermT::IfLet { pattern, inner } => TermR::IfLet {
+                pattern: pattern.to_raw(),
+                inner: Box::new(inner.to_raw()),
+                span: (),
+            },
+            TermT::Hadamard => TermR::Hadamard { span: () },
+            TermT::Gate { name, .. } => TermR::Gate {
+                name: name.to_owned(),
+                span: (),
+            },
+            TermT::Inverse { inner } => TermR::Inverse {
+                inner: Box::new(inner.to_raw()),
+                span: (),
+            },
+            TermT::Sqrt { inner } => TermR::Sqrt {
+                inner: Box::new(inner.to_raw()),
+                span: (),
+            },
+        }
+    }
+}
+
+impl PatternT {
+    pub fn to_raw(&self) -> PatternR<()> {
+        match self {
+            PatternT::Comp { patterns } => PatternR::Comp {
+                patterns: patterns.iter().map(PatternT::to_raw).collect(),
+                span: (),
+            },
+            PatternT::Tensor { patterns } => PatternR::Tensor {
+                patterns: patterns.iter().map(PatternT::to_raw).collect(),
+                span: (),
+            },
+            PatternT::Ket { states } => PatternR::Ket {
+                states: states.clone(),
+                span: (),
+            },
+            PatternT::Unitary(term_t) => PatternR::Unitary(Box::new(term_t.to_raw())),
+        }
+    }
+}
