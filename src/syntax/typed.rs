@@ -21,13 +21,13 @@ impl TermType {
 pub enum TermT {
     Comp {
         terms: Vec<TermT>,
-        ty: usize,
+        ty: TermType,
     },
     Tensor {
         terms: Vec<TermT>,
     },
     Id {
-        ty: usize,
+        ty: TermType,
     },
     Phase {
         phase: Phase,
@@ -49,9 +49,9 @@ pub enum TermT {
 impl TermT {
     pub fn get_type(&self) -> TermType {
         match self {
-            TermT::Comp { ty, .. } => TermType(*ty),
+            TermT::Comp { ty, .. } => *ty,
             TermT::Tensor { terms } => terms.iter().map(TermT::get_type).sum(),
-            TermT::Id { ty } => TermType(*ty),
+            TermT::Id { ty } => *ty,
             TermT::Phase { .. } => TermType(0),
             TermT::IfLet { pattern, .. } => TermType(pattern.get_type().0),
             TermT::Hadamard => TermType(1),

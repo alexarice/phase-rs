@@ -57,10 +57,7 @@ impl<S: Clone> TermR<S> {
                     raw = r;
                     v.push(term);
                 }
-                Ok(TermT::Comp {
-                    terms: v,
-                    ty: ty1.0,
-                })
+                Ok(TermT::Comp { terms: v, ty: ty1 })
             }
             TermR::Tensor { terms, .. } => Ok(TermT::Tensor {
                 terms: terms
@@ -70,7 +67,7 @@ impl<S: Clone> TermR<S> {
             }),
             TermR::Id { qubits, .. } => Ok(TermT::Comp {
                 terms: vec![],
-                ty: *qubits,
+                ty: TermType(*qubits),
             }),
             TermR::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
             TermR::IfLet { pattern, inner, .. } => {

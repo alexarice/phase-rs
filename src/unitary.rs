@@ -16,7 +16,7 @@ impl TermN {
             TermN::Comp { terms, ty } => {
                 let mut terms_iter = terms.iter().map(TermN::to_unitary);
                 match terms_iter.next() {
-                    None => Mat::identity(1 << ty, 1 << ty),
+                    None => Mat::identity(1 << ty.0, 1 << ty.0),
                     Some(u) => terms_iter.fold(u, |x, y| y * x),
                 }
             }

@@ -1,7 +1,7 @@
 use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
-use phase_rs::parsing::command;
+use phase_rs::{parsing::command, syntax::normal::TermN};
 use winnow::{LocatingSlice, Parser, ascii::multispace0, combinator::terminated};
 
 /// Interpreter for "it's just a phase"
@@ -19,7 +19,7 @@ fn parse_and_check(src: &str) -> Result<(), String> {
     println!("Parsed: {parsed:#?}");
     let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
     println!("Checked: {checked:#?}");
-    let evalled = checked.eval();
+    let evalled: TermN = checked.eval(false);
     println!("Checked: {evalled:#?}");
     let unitary = evalled.to_unitary();
     for x in unitary.row_iter() {

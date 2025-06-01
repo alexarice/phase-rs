@@ -5,7 +5,7 @@ use super::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TermN {
-    Comp { terms: Vec<TermN>, ty: usize },
+    Comp { terms: Vec<TermN>, ty: TermType },
     Tensor { terms: Vec<TermN> },
     Atom { atom: AtomN },
 }
@@ -38,54 +38,12 @@ pub enum PatternN {
     Unitary(Box<AtomN>),
 }
 
-impl TermN {
-    pub fn to_pattern(self) -> PatternN {
-        match self {
-            TermN::Comp { terms, ty } => PatternN::Comp {
-                patterns: terms.into_iter().map(TermN::to_pattern).collect(),
-                ty: PatternType(ty, ty),
-            },
-            TermN::Tensor { terms } => PatternN::Tensor {
-                patterns: terms.into_iter().map(TermN::to_pattern).collect(),
-            },
-            TermN::Atom { atom } => PatternN::Unitary(Box::new(atom)),
-        }
-    }
-
-    pub fn invert(self) -> TermN {
-        match self {
-            TermN::Comp { terms, ty } => TermN::Comp {
-                terms: terms.into_iter().rev().map(TermN::invert).collect(),
-                ty,
-            },
-            TermN::Tensor { terms } => TermN::Tensor {
-                terms: terms.into_iter().map(TermN::invert).collect(),
-            },
-            TermN::Atom { atom } => TermN::Atom {
-                atom: atom.invert(),
-            },
-        }
-    }
-}
-
 impl AtomN {
     pub fn get_type(&self) -> TermType {
         match self {
             AtomN::Phase { .. } => TermType(0),
             AtomN::IfLet { ty, .. } => TermType(*ty),
             AtomN::Hadamard => TermType(1),
-        }
-    }
-
-    pub fn invert(self) -> AtomN {
-        match self {
-            AtomN::Phase { angle } => AtomN::Phase { angle: -angle },
-            AtomN::IfLet { pattern, inner, ty } => AtomN::IfLet {
-                pattern,
-                inner: Box::new(inner.invert()),
-                ty,
-            },
-            AtomN::Hadamard => AtomN::Hadamard,
         }
     }
 }
