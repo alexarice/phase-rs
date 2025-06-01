@@ -8,7 +8,7 @@ use winnow::{LocatingSlice, Parser, ascii::multispace0, combinator::terminated};
 #[derive(clap::Parser)]
 struct Args {
     /// File name to run
-    #[arg(value_name = "FILE")]
+    #[arg(long, value_name = "FILE")]
     file: Option<PathBuf>,
 }
 
