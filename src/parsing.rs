@@ -4,61 +4,27 @@ use winnow::{
     LocatingSlice, Parser, Result,
     ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
     combinator::{alt, delimited, opt, preceded, repeat, separated, seq},
-    error::StrContextValue,
 };
 
 use crate::{
     command::Command,
     syntax::{
         KetState, Phase,
-        raw::{PatternR, TermR, TypeR},
+        raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
     },
 };
-
-pub fn qreg(input: &mut LocatingSlice<&str>) -> Result<usize> {
-    preceded('q', dec_uint).parse_next(input)
-}
-
-pub fn ty(input: &mut LocatingSlice<&str>) -> Result<TypeR<Range<usize>>> {
-    seq!(qreg, _: multispace0, _: "<->", _: multispace0, qreg)
-        .with_span()
-        .verify_map(|((before, after), span)| {
-            if before == after {
-                Some(TypeR::Unitary(before, span))
-            } else {
-                None
-            }
-        })
-        .context(winnow::error::StrContext::Label("unitary type"))
-        .context(winnow::error::StrContext::Expected(
-            StrContextValue::Description("source and target to be identical"),
-        ))
-        .parse_next(input)
-}
 
 pub fn tm(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
     separated(1.., tensor, (multispace0, ';', multispace0))
         .with_span()
-        .map(|(v, span): (Vec<_>, _)| {
-            if v.len() == 1 {
-                v.into_iter().next().unwrap()
-            } else {
-                TermR::Comp { terms: v, span }
-            }
-        })
+        .map(|(v, span)| TermR { terms: v, span })
         .parse_next(input)
 }
 
-fn tensor(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
+fn tensor(input: &mut LocatingSlice<&str>) -> Result<TensorR<Range<usize>>> {
     separated(1.., atom, (multispace0, 'x', multispace0))
         .with_span()
-        .map(|(v, span): (Vec<_>, _)| {
-            if v.len() == 1 {
-                v.into_iter().next().unwrap()
-            } else {
-                TermR::Tensor { terms: v, span }
-            }
-        })
+        .map(|(v, span)| TensorR { terms: v, span })
         .parse_next(input)
 }
 
@@ -77,27 +43,29 @@ fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
     .parse_next(input)
 }
 
-fn atom(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
+fn atom(input: &mut LocatingSlice<&str>) -> Result<AtomR<Range<usize>>> {
     (alt((
-	delimited(("(", multispace0), tm, (multispace0, ")")),
+	delimited(("(", multispace0), tm, (multispace0, ")"))
+	    .with_span()
+	    .map(|(term, span)| AtomR::Brackets { term, span }),
 	delimited(("sqrt(", multispace0), tm, (multispace0, ")"))
 	    .with_span()
-	    .map(|(inner, span)| TermR::Sqrt { inner: Box::new(inner), span }),
+	    .map(|(inner, span)| AtomR::Sqrt { inner, span }),
 	preceded("id", opt(dec_uint))
 	    .with_span()
-	    .map(|(qubits, span)| TermR::Id { qubits: qubits.unwrap_or(1), span }),
+	    .map(|(qubits, span)| AtomR::Id { qubits: qubits.unwrap_or(1), span }),
 	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom)
 	    .with_span()
-	    .map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span }),
-	phase.with_span().map(|(phase, span)| TermR::Phase { phase, span }),
-	"H".span().map(|span| TermR::Hadamard { span }),
-	identifier.with_span().map(|(name, span)| TermR::Gate { name, span })
+	    .map(|((pattern, inner), span)| AtomR::IfLet{ pattern, inner: Box::new(inner), span }),
+	phase.with_span().map(|(phase, span)| AtomR::Phase { phase, span }),
+	"H".span().map(|span| AtomR::Hadamard { span }),
+	identifier.with_span().map(|(name, span)| AtomR::Gate { name, span })
     )),
      opt((multispace0, "^", multispace0, "-1")))
 	.with_span()
 	.map(|((inner, invert), span)| {
 	    if invert.is_some() {
-		TermR::Inverse { inner: Box::new(inner) , span }
+		AtomR::Inverse { inner: Box::new(inner) , span }
 	    } else {
 		inner
 	    }})
@@ -107,30 +75,18 @@ fn atom(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
 fn pattern(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
     separated(1.., pattern_tensor, (multispace0, '.', multispace0))
         .with_span()
-        .map(|(v, span): (Vec<_>, _)| {
-            if v.len() == 1 {
-                v.into_iter().next().unwrap()
-            } else {
-                PatternR::Comp { patterns: v, span }
-            }
-        })
+        .map(|(v, span)| PatternR { patterns: v, span })
         .parse_next(input)
 }
 
-fn pattern_tensor(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
+fn pattern_tensor(input: &mut LocatingSlice<&str>) -> Result<PatTensorR<Range<usize>>> {
     separated(1.., pattern_atom, (multispace0, 'x', multispace0))
         .with_span()
-        .map(|(v, span): (Vec<_>, _)| {
-            if v.len() == 1 {
-                v.into_iter().next().unwrap()
-            } else {
-                PatternR::Tensor { patterns: v, span }
-            }
-        })
+        .map(|(v, span)| PatTensorR { patterns: v, span })
         .parse_next(input)
 }
 
-fn ket(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
+fn ket(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>>> {
     delimited(
         "|",
         repeat(
@@ -145,15 +101,17 @@ fn ket(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
         ">",
     )
     .with_span()
-    .map(|(states, span)| PatternR::Ket { states, span })
+    .map(|(states, span)| PatAtomR::Ket { states, span })
     .parse_next(input)
 }
 
-fn pattern_atom(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
+fn pattern_atom(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>>> {
     alt((
-        delimited(("(", multispace0), pattern, (multispace0, ")")),
+        delimited(("(", multispace0), pattern, (multispace0, ")"))
+            .with_span()
+            .map(|(pattern, span)| PatAtomR::Brackets { pattern, span }),
         ket,
-        tm.map(|x| PatternR::Unitary(Box::new(x))),
+        tm.map(|x| PatAtomR::Unitary(Box::new(x))),
     ))
     .parse_next(input)
 }
