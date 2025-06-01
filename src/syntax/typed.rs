@@ -80,7 +80,7 @@ impl Sum for PatternType {
 pub enum PatternT {
     Comp { patterns: Vec<PatternT> },
     Tensor { patterns: Vec<PatternT> },
-    Ket { state: KetState },
+    Ket { states: Vec<KetState> },
     Unitary(Box<TermT>),
 }
 

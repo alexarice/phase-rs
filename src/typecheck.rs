@@ -166,11 +166,8 @@ impl<S: Clone> PatternR<S> {
                     .map(|p| p.check(env))
                     .collect::<Result<_, _>>()?,
             }),
-            PatternR::Ket { states, .. } => Ok(PatternT::Tensor {
-                patterns: states
-                    .iter()
-                    .map(|&state| PatternT::Ket { state })
-                    .collect(),
+            PatternR::Ket { states, .. } => Ok(PatternT::Ket {
+                states: states.clone(),
             }),
             PatternR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check(env, None)?))),
         }

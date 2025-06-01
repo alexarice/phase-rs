@@ -104,10 +104,60 @@ impl PatternT {
             PatternT::Tensor { patterns } => PatternN::Tensor {
                 patterns: patterns.iter().map(PatternT::eval).collect(),
             },
-            PatternT::Ket { state } => PatternN::Ket { state: *state },
+            PatternT::Ket { states } => PatternN::Tensor {
+                patterns: states
+                    .iter()
+                    .map(|&state| PatternN::Ket { state })
+                    .collect(),
+            },
             PatternT::Unitary(term_t) => term_t.eval(),
         }
     }
 }
 
+impl TermN {
+    pub fn quote(&self) -> TermT {
+        match self {
+            TermN::Comp { terms, ty } => TermT::Comp {
+                terms: terms.iter().map(TermN::quote).collect(),
+                ty: *ty,
+            },
+            TermN::Tensor { terms } => TermT::Tensor {
+                terms: terms.iter().map(TermN::quote).collect(),
+            },
+            TermN::Atom { atom } => atom.quote(),
+        }
+    }
+}
 
+impl AtomN {
+    pub fn quote(&self) -> TermT {
+        match self {
+            AtomN::Phase { angle } => TermT::Phase {
+                phase: Phase::Angle(*angle),
+            },
+            AtomN::IfLet { pattern, inner, .. } => TermT::IfLet {
+                pattern: pattern.quote(),
+                inner: Box::new(inner.quote()),
+            },
+            AtomN::Hadamard => TermT::Hadamard,
+        }
+    }
+}
+
+impl PatternN {
+    pub fn quote(&self) -> PatternT {
+        match self {
+            PatternN::Comp { patterns, .. } => PatternT::Comp {
+                patterns: patterns.iter().map(PatternN::quote).collect(),
+            },
+            PatternN::Tensor { patterns } => PatternT::Tensor {
+                patterns: patterns.iter().map(PatternN::quote).collect(),
+            },
+            PatternN::Ket { state } => PatternT::Ket {
+                states: vec![*state],
+            },
+            PatternN::Unitary(atom_n) => PatternT::Unitary(Box::new(atom_n.quote())),
+        }
+    }
+}
