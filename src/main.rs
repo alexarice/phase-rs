@@ -19,7 +19,7 @@ fn parse_and_check(src: &str) -> Result<(), String> {
     println!("Parsed: {parsed:#?}");
     let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
     println!("Checked: {checked:#?}");
-    let evalled: TermN = checked.eval(false);
+    let evalled: TermN = checked.eval();
     println!("Checked: {evalled:#?}");
     let unitary = evalled.to_unitary();
     for x in unitary.row_iter() {

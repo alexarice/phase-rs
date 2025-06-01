@@ -40,6 +40,10 @@ pub enum TermR<S> {
         inner: Box<TermR<S>>,
         span: S,
     },
+    Sqrt {
+        inner: Box<TermR<S>>,
+        span: S,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

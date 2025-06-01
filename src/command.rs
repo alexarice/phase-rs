@@ -13,10 +13,10 @@ impl<S: Clone> Command<S> {
     pub fn check(&self) -> Result<(Env, TermT), TypeCheckError<S>> {
         let mut env = Env::default();
         for (name, tm) in &self.gates {
-            let t = tm.check(&env)?;
+            let t = tm.check(&env, None)?;
             env.0.insert(name.clone(), t);
         }
-        let tm = self.term.check(&env)?;
+        let tm = self.term.check(&env, None)?;
         Ok((env, tm))
     }
 }

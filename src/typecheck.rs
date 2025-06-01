@@ -29,22 +29,32 @@ pub enum TypeCheckError<S> {
         name: String,
         span: S,
     },
+    TermNotRootable {
+        tm: TermR<S>,
+        span_of_root: S,
+    },
 }
 
 #[derive(Default)]
 pub struct Env(pub(crate) HashMap<String, TermT>);
 
 impl<S: Clone> TermR<S> {
-    pub fn check(&self, env: &Env) -> Result<TermT, TypeCheckError<S>> {
+    pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         match self {
             TermR::Comp { terms, .. } => {
+                if let Some(span) = check_sqrt {
+                    return Err(TypeCheckError::TermNotRootable {
+                        tm: self.clone(),
+                        span_of_root: span.clone(),
+                    });
+                }
                 let mut term_iter = terms.iter();
                 let mut raw = term_iter.next().unwrap();
-                let t = raw.check(env)?;
+                let t = raw.check(env, check_sqrt)?;
                 let ty1 = t.get_type();
                 let mut v = vec![t];
                 for r in term_iter {
-                    let term = r.check(env)?;
+                    let term = r.check(env, check_sqrt)?;
                     let ty2 = term.get_type();
                     if ty1 != ty2 {
                         return Err(TypeCheckError::TypeMismatch {
@@ -62,7 +72,7 @@ impl<S: Clone> TermR<S> {
             TermR::Tensor { terms, .. } => Ok(TermT::Tensor {
                 terms: terms
                     .iter()
-                    .map(|t| t.check(env))
+                    .map(|t| t.check(env, check_sqrt))
                     .collect::<Result<_, _>>()?,
             }),
             TermR::Id { qubits, .. } => Ok(TermT::Comp {
@@ -72,7 +82,7 @@ impl<S: Clone> TermR<S> {
             TermR::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
             TermR::IfLet { pattern, inner, .. } => {
                 let p = pattern.check(env)?;
-                let t = inner.check(env)?;
+                let t = inner.check(env, check_sqrt)?;
                 let pty = p.get_type();
                 let tty = t.get_type();
                 if pty.1 != tty.0 {
@@ -104,8 +114,19 @@ impl<S: Clone> TermR<S> {
                 }
             }
             TermR::Inverse { inner, .. } => {
-                let inner_t = inner.check(env)?;
+                let inner_t = inner.check(env, check_sqrt)?;
                 Ok(TermT::Inverse {
+                    inner: Box::new(inner_t),
+                })
+            }
+            TermR::Sqrt { inner, span } => {
+                let inner_t = if check_sqrt.is_some() {
+                    inner.check(env, None)?
+                } else {
+                    inner.check(env, Some(span))?
+                };
+
+                Ok(TermT::Sqrt {
                     inner: Box::new(inner_t),
                 })
             }
@@ -151,7 +172,7 @@ impl<S: Clone> PatternR<S> {
                     .map(|&state| PatternT::Ket { state })
                     .collect(),
             }),
-            PatternR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check(env)?))),
+            PatternR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check(env, None)?))),
         }
     }
 }

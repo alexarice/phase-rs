@@ -80,12 +80,28 @@ fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
 fn atom(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
     (alt((
 	delimited(("(", multispace0), tm, (multispace0, ")")),
-	preceded("id", opt(dec_uint)).with_span().map(|(qubits, span)| TermR::Id { qubits: qubits.unwrap_or(1), span }),
-	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom).with_span().map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span }),
+	delimited(("sqrt(", multispace0), tm, (multispace0, ")"))
+	    .with_span()
+	    .map(|(inner, span)| TermR::Sqrt { inner: Box::new(inner), span }),
+	preceded("id", opt(dec_uint))
+	    .with_span()
+	    .map(|(qubits, span)| TermR::Id { qubits: qubits.unwrap_or(1), span }),
+	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom)
+	    .with_span()
+	    .map(|((pattern, inner), span)| TermR::IfLet{ pattern, inner: Box::new(inner), span }),
 	phase.with_span().map(|(phase, span)| TermR::Phase { phase, span }),
 	"H".span().map(|span| TermR::Hadamard { span }),
 	identifier.with_span().map(|(name, span)| TermR::Gate { name, span })
-    )), opt((multispace0, "^", multispace0, "-1"))).with_span().map(|((inner, invert), span)| if invert.is_some() { TermR::Inverse { inner: Box::new(inner) , span }} else { inner }).parse_next(input)
+    )),
+     opt((multispace0, "^", multispace0, "-1")))
+	.with_span()
+	.map(|((inner, invert), span)| {
+	    if invert.is_some() {
+		TermR::Inverse { inner: Box::new(inner) , span }
+	    } else {
+		inner
+	    }})
+	.parse_next(input)
 }
 
 fn pattern(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {

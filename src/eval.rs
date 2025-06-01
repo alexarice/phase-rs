@@ -60,29 +60,36 @@ impl Buildable for PatternN {
 }
 
 impl TermT {
-    pub fn eval<B: Buildable>(&self, inv: bool) -> B {
+    pub fn eval<B: Buildable>(&self) -> B {
+        self.eval_with_phase_mul(1.0)
+    }
+
+    fn eval_with_phase_mul<B: Buildable>(&self, phase_mul: f64) -> B {
         match self {
             TermT::Comp { terms, ty } => {
-                let mapped_terms = terms.iter().map(|t| t.eval(inv));
-                if inv {
+                let mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
+                if phase_mul < 0.0 {
                     B::comp(mapped_terms, ty)
                 } else {
                     B::comp(mapped_terms.rev(), ty)
                 }
             }
-            TermT::Tensor { terms } => B::tensor(terms.iter().map(|t| t.eval(inv))),
+            TermT::Tensor { terms } => {
+                B::tensor(terms.iter().map(|t| t.eval_with_phase_mul(phase_mul)))
+            }
             TermT::Id { ty } => B::comp(std::iter::empty(), ty),
             TermT::Phase { phase } => B::atom(AtomN::Phase {
-                angle: if inv { -phase.eval() } else { phase.eval() },
+                angle: phase_mul * phase.eval(),
             }),
             TermT::IfLet { pattern, inner } => B::atom(AtomN::IfLet {
                 pattern: pattern.eval(),
-                inner: Box::new(inner.eval(inv)),
+                inner: Box::new(inner.eval_with_phase_mul(phase_mul)),
                 ty: pattern.get_type().0,
             }),
             TermT::Hadamard => B::atom(AtomN::Hadamard),
-            TermT::Gate { def, .. } => def.eval(inv),
-            TermT::Inverse { inner } => inner.eval(!inv),
+            TermT::Gate { def, .. } => def.eval_with_phase_mul(phase_mul),
+            TermT::Inverse { inner } => inner.eval_with_phase_mul(-phase_mul),
+            TermT::Sqrt { inner } => inner.eval_with_phase_mul(phase_mul / 2.0),
         }
     }
 }
@@ -98,7 +105,7 @@ impl PatternT {
                 patterns: patterns.iter().map(PatternT::eval).collect(),
             },
             PatternT::Ket { state } => PatternN::Ket { state: *state },
-            PatternT::Unitary(term_t) => term_t.eval(false),
+            PatternT::Unitary(term_t) => term_t.eval(),
         }
     }
 }
