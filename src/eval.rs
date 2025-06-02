@@ -128,6 +128,52 @@ impl TermN {
             TermN::Atom { atom } => atom.quote(),
         }
     }
+
+    pub fn squash_comp(mut self, acc: &mut Vec<TermN>) {
+        if let TermN::Comp { terms, .. } = self {
+            for t in terms {
+                t.squash_comp(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    pub fn squash_tensor(mut self, acc: &mut Vec<TermN>) {
+        if let TermN::Tensor { terms, .. } = self {
+            for t in terms {
+                t.squash_tensor(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    pub fn squash(&mut self) {
+        match self {
+            TermN::Comp { terms, .. } => {
+                let old_terms = std::mem::take(terms);
+                for t in old_terms {
+                    t.squash_comp(terms);
+                }
+		if terms.len() == 1 {
+		    *self = terms.pop().unwrap();
+		}
+            }
+            TermN::Tensor { terms } => {
+                let old_terms = std::mem::take(terms);
+                for t in old_terms {
+                    t.squash_tensor(terms);
+                }
+		if terms.len() == 1 {
+		    *self = terms.pop().unwrap();
+		}
+            }
+            TermN::Atom { atom } => atom.squash(),
+        }
+    }
 }
 
 impl AtomN {
@@ -141,6 +187,13 @@ impl AtomN {
                 inner: Box::new(inner.quote()),
             },
             AtomN::Hadamard => TermT::Hadamard,
+        }
+    }
+
+    pub fn squash(&mut self) {
+        if let AtomN::IfLet { pattern, inner, .. } = self {
+            pattern.squash();
+            inner.squash();
         }
     }
 }
@@ -158,6 +211,53 @@ impl PatternN {
                 states: vec![*state],
             },
             PatternN::Unitary(atom_n) => PatternT::Unitary(Box::new(atom_n.quote())),
+        }
+    }
+
+    pub fn squash_comp(mut self, acc: &mut Vec<PatternN>) {
+        if let PatternN::Comp { patterns, .. } = self {
+            for p in patterns {
+                p.squash_comp(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    pub fn squash_tensor(mut self, acc: &mut Vec<PatternN>) {
+        if let PatternN::Tensor { patterns, .. } = self {
+            for p in patterns {
+                p.squash_tensor(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    pub fn squash(&mut self) {
+        match self {
+            PatternN::Comp { patterns, .. } => {
+                let old_patterns = std::mem::take(patterns);
+                for p in old_patterns {
+                    p.squash_comp(patterns);
+                }
+		if patterns.len() == 1 {
+		    *self = patterns.pop().unwrap();
+		}
+            }
+            PatternN::Tensor { patterns } => {
+                let old_patterns = std::mem::take(patterns);
+                for p in old_patterns {
+                    p.squash_tensor(patterns);
+                }
+		if patterns.len() == 1 {
+		    *self = patterns.pop().unwrap();
+		}
+            }
+            PatternN::Ket { .. } => {}
+            PatternN::Unitary(atom_n) => atom_n.squash(),
         }
     }
 }

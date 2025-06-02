@@ -19,8 +19,10 @@ fn parse_and_check(src: &str) -> Result<(), String> {
     println!("Parsed: {parsed:#?}");
     let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
     println!("Checked: {checked:#?}");
-    let evalled: TermN = checked.eval();
-    println!("Checked: {evalled:#?}");
+    let mut evalled: TermN = checked.eval();
+    println!("Evalled: {evalled:#?}");
+    evalled.squash();
+    println!("Squashed: {evalled:#?}");
     let quoted = evalled.quote();
     let raw = quoted.to_raw();
     let doc = raw.to_doc();
