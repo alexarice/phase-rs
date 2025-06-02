@@ -199,7 +199,7 @@ impl<S: Clone> PatAtomR<S> {
 impl TermT {
     pub fn to_raw(&self) -> TermR<()> {
         let terms = if let TermT::Comp { terms, .. } = self {
-            terms.iter().map(|t| t.to_raw_tensor()).collect()
+	    terms.iter().map(|t| t.to_raw_tensor()).collect()
         } else {
             vec![self.to_raw_tensor()]
         };

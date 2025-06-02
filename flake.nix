@@ -18,11 +18,7 @@
           {
             devShells.default = with pkgs; mkShell {
               buildInputs = [
-                rust-analyzer
-                (lib.hiPrio rust-bin.nightly.latest.rustfmt)
-                cargo
-                rustc
-                clippy
+                rust-bin.stable.latest.default
               ];
             };
           }

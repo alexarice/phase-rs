@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use pretty::RcDoc;
 
 use super::{KetState, Phase};
@@ -97,7 +99,11 @@ impl<S> AtomR<S> {
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            AtomR::Id { qubits, .. } => RcDoc::text(format!("id{qubits}")),
+            AtomR::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
+                Cow::Borrowed("id")
+            } else {
+                Cow::Owned(format!("id{qubits}"))
+            }),
             AtomR::Phase { phase, .. } => phase.to_doc(),
             AtomR::IfLet { pattern, inner, .. } => RcDoc::text("if let")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
@@ -124,7 +130,7 @@ impl Phase {
             Phase::Angle(a) => RcDoc::text(format!("ph({a}pi)")),
             Phase::MinusOne => RcDoc::text("-1"),
             Phase::Imag => RcDoc::text("i"),
-            Phase::NegImag => RcDoc::text("-i"),
+            Phase::MinusImag => RcDoc::text("-i"),
         }
     }
 }

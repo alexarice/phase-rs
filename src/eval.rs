@@ -10,7 +10,7 @@ impl Phase {
             Phase::Angle(a) => *a,
             Phase::MinusOne => 1.0,
             Phase::Imag => 0.5,
-            Phase::NegImag => 1.5,
+            Phase::MinusImag => 1.5,
         }
     }
 }
@@ -118,10 +118,16 @@ impl PatternT {
 impl TermN {
     pub fn quote(&self) -> TermT {
         match self {
-            TermN::Comp { terms, ty } => TermT::Comp {
-                terms: terms.iter().map(TermN::quote).collect(),
-                ty: *ty,
-            },
+            TermN::Comp { terms, ty } => {
+                if terms.is_empty() {
+                    TermT::Id { ty: *ty }
+                } else {
+                    TermT::Comp {
+                        terms: terms.iter().map(TermN::quote).collect(),
+                        ty: *ty,
+                    }
+                }
+            }
             TermN::Tensor { terms } => TermT::Tensor {
                 terms: terms.iter().map(TermN::quote).collect(),
             },
@@ -158,18 +164,18 @@ impl TermN {
                 for t in old_terms {
                     t.squash_comp(terms);
                 }
-		if terms.len() == 1 {
-		    *self = terms.pop().unwrap();
-		}
+                if terms.len() == 1 {
+                    *self = terms.pop().unwrap();
+                }
             }
             TermN::Tensor { terms } => {
                 let old_terms = std::mem::take(terms);
                 for t in old_terms {
                     t.squash_tensor(terms);
                 }
-		if terms.len() == 1 {
-		    *self = terms.pop().unwrap();
-		}
+                if terms.len() == 1 {
+                    *self = terms.pop().unwrap();
+                }
             }
             TermN::Atom { atom } => atom.squash(),
         }
@@ -180,7 +186,7 @@ impl AtomN {
     pub fn quote(&self) -> TermT {
         match self {
             AtomN::Phase { angle } => TermT::Phase {
-                phase: Phase::Angle(*angle),
+                phase: Phase::from_angle(*angle),
             },
             AtomN::IfLet { pattern, inner, .. } => TermT::IfLet {
                 pattern: pattern.quote(),
@@ -201,9 +207,15 @@ impl AtomN {
 impl PatternN {
     pub fn quote(&self) -> PatternT {
         match self {
-            PatternN::Comp { patterns, .. } => PatternT::Comp {
-                patterns: patterns.iter().map(PatternN::quote).collect(),
-            },
+            PatternN::Comp { patterns, ty } => {
+                if patterns.is_empty() {
+                    PatternT::Unitary(Box::new(TermT::Id { ty: TermType(ty.0) }))
+                } else {
+                    PatternT::Comp {
+                        patterns: patterns.iter().map(PatternN::quote).collect(),
+                    }
+                }
+            }
             PatternN::Tensor { patterns } => PatternT::Tensor {
                 patterns: patterns.iter().map(PatternN::quote).collect(),
             },
@@ -243,18 +255,18 @@ impl PatternN {
                 for p in old_patterns {
                     p.squash_comp(patterns);
                 }
-		if patterns.len() == 1 {
-		    *self = patterns.pop().unwrap();
-		}
+                if patterns.len() == 1 {
+                    *self = patterns.pop().unwrap();
+                }
             }
             PatternN::Tensor { patterns } => {
                 let old_patterns = std::mem::take(patterns);
                 for p in old_patterns {
                     p.squash_tensor(patterns);
                 }
-		if patterns.len() == 1 {
-		    *self = patterns.pop().unwrap();
-		}
+                if patterns.len() == 1 {
+                    *self = patterns.pop().unwrap();
+                }
             }
             PatternN::Ket { .. } => {}
             PatternN::Unitary(atom_n) => atom_n.squash(),

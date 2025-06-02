@@ -32,7 +32,7 @@ fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
     alt((
         "-1".value(Phase::MinusOne),
         "i".value(Phase::Imag),
-        "-i".value(Phase::NegImag),
+        "-i".value(Phase::MinusImag),
         delimited(
             ("ph(", multispace0),
             float,
