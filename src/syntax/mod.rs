@@ -39,15 +39,15 @@ pub enum Phase {
 }
 
 impl Phase {
-    pub fn from_angle(f : f64) -> Self {
-	if f == 0.5 {
-	    Phase::Imag
-	} else if f == 1.0 {
-	    Phase::MinusOne
-	} else if f == 1.0 {
-	    Phase::MinusImag
-	} else {
-	    Phase::Angle(f)
-	}
+    pub fn from_angle(f: f64) -> Self {
+        if f == 0.5 {
+            Phase::Imag
+        } else if f == 1.0 {
+            Phase::MinusOne
+        } else if f == 1.0 {
+            Phase::MinusImag
+        } else {
+            Phase::Angle(f)
+        }
     }
 }

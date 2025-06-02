@@ -1,9 +1,10 @@
 use std::ops::Range;
 
 use winnow::{
-    LocatingSlice, Parser, Result,
+    LocatingSlice, ModalResult, Parser,
     ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
-    combinator::{alt, delimited, opt, preceded, repeat, separated, seq},
+    combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq},
+    error::{StrContext, StrContextValue},
 };
 
 use crate::{
@@ -14,21 +15,23 @@ use crate::{
     },
 };
 
-pub fn tm(input: &mut LocatingSlice<&str>) -> Result<TermR<Range<usize>>> {
+pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
     separated(1.., tensor, (multispace0, ';', multispace0))
+        .context(StrContext::Label("term"))
         .with_span()
         .map(|(v, span)| TermR { terms: v, span })
         .parse_next(input)
 }
 
-fn tensor(input: &mut LocatingSlice<&str>) -> Result<TensorR<Range<usize>>> {
+fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>> {
     separated(1.., atom, (multispace0, 'x', multispace0))
+        .context(StrContext::Label("term"))
         .with_span()
         .map(|(v, span)| TensorR { terms: v, span })
         .parse_next(input)
 }
 
-fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
+fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
     alt((
         "-1".value(Phase::MinusOne),
         "i".value(Phase::Imag),
@@ -43,25 +46,32 @@ fn phase(input: &mut LocatingSlice<&str>) -> Result<Phase> {
     .parse_next(input)
 }
 
-fn atom(input: &mut LocatingSlice<&str>) -> Result<AtomR<Range<usize>>> {
+fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
     (alt((
-	delimited(("(", multispace0), tm, (multispace0, ")"))
+	delimited(("(", multispace0),
+		  cut_err(tm),
+		  cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
 	    .with_span()
 	    .map(|(term, span)| AtomR::Brackets { term, span }),
-	delimited(("sqrt(", multispace0), tm, (multispace0, ")"))
+	preceded(("sqrt", multispace0), cut_err(atom))
 	    .with_span()
-	    .map(|(inner, span)| AtomR::Sqrt { inner, span }),
+	    .map(|(inner, span)| AtomR::Sqrt { inner: Box::new(inner), span }),
 	preceded("id", opt(dec_uint))
 	    .with_span()
 	    .map(|(qubits, span)| AtomR::Id { qubits: qubits.unwrap_or(1), span }),
-	seq!(_: "if", _: multispace1, _: "let", _: multispace1, pattern, _: multispace1, _: "then", _: multispace1, atom)
+	preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
 	    .with_span()
 	    .map(|((pattern, inner), span)| AtomR::IfLet{ pattern, inner: Box::new(inner), span }),
 	phase.with_span().map(|(phase, span)| AtomR::Phase { phase, span }),
 	"H".span().map(|span| AtomR::Hadamard { span }),
 	identifier.with_span().map(|(name, span)| AtomR::Gate { name, span })
-    )),
-     opt((multispace0, "^", multispace0, "-1")))
+    )).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
+     .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
+     .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
+     .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
+     .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
+     .context(StrContext::Expected(StrContextValue::Description("identifier"))),
+     opt((multispace0, "^", multispace0, cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1")))))).context(StrContext::Label("term"))
 	.with_span()
 	.map(|((inner, invert), span)| {
 	    if invert.is_some() {
@@ -72,21 +82,21 @@ fn atom(input: &mut LocatingSlice<&str>) -> Result<AtomR<Range<usize>>> {
 	.parse_next(input)
 }
 
-fn pattern(input: &mut LocatingSlice<&str>) -> Result<PatternR<Range<usize>>> {
+fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
     separated(1.., pattern_tensor, (multispace0, '.', multispace0))
         .with_span()
         .map(|(v, span)| PatternR { patterns: v, span })
         .parse_next(input)
 }
 
-fn pattern_tensor(input: &mut LocatingSlice<&str>) -> Result<PatTensorR<Range<usize>>> {
+fn pattern_tensor(input: &mut LocatingSlice<&str>) -> ModalResult<PatTensorR<Range<usize>>> {
     separated(1.., pattern_atom, (multispace0, 'x', multispace0))
         .with_span()
         .map(|(v, span)| PatTensorR { patterns: v, span })
         .parse_next(input)
 }
 
-fn ket(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>>> {
+fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
     delimited(
         "|",
         repeat(
@@ -105,7 +115,7 @@ fn ket(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>>> {
     .parse_next(input)
 }
 
-fn pattern_atom(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>>> {
+fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
     alt((
         delimited(("(", multispace0), pattern, (multispace0, ")"))
             .with_span()
@@ -116,16 +126,29 @@ fn pattern_atom(input: &mut LocatingSlice<&str>) -> Result<PatAtomR<Range<usize>
     .parse_next(input)
 }
 
-fn identifier(input: &mut LocatingSlice<&str>) -> Result<String> {
-    alphanumeric1.map(|s: &str| s.to_owned()).parse_next(input)
+fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
+    alphanumeric1
+        .map(|s: &str| s.to_owned())
+        .context(StrContext::Label("identifier"))
+        .context(StrContext::Expected(StrContextValue::Description(
+            "alphanumeric string",
+        )))
+        .parse_next(input)
 }
 
-fn gate(input: &mut LocatingSlice<&str>) -> Result<(String, TermR<Range<usize>>)> {
-    seq!(_: ("gate", multispace1), identifier, _: (multispace0, "=", multispace0), tm, _: (multispace0, ",", multispace0)).parse_next(input)
+fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usize>>)> {
+    preceded(
+	"gate",
+	cut_err(seq!(_: multispace1,
+		     identifier,
+		     _: (multispace0, "=", multispace0).context(StrContext::Expected(StrContextValue::CharLiteral('='))),
+		     tm,
+		     _: (multispace0, ",", multispace0))).context(StrContext::Label("gate definition"))
+    ).parse_next(input)
 }
 
-pub fn command(input: &mut LocatingSlice<&str>) -> Result<Command<Range<usize>>> {
+pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usize>>> {
     let gates = repeat(0.., gate).parse_next(input)?;
-    let term = tm.parse_next(input)?;
+    let term = tm.context(StrContext::Label("Term")).parse_next(input)?;
     Ok(Command { gates, term })
 }

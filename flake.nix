@@ -18,6 +18,7 @@
           {
             devShells.default = with pkgs; mkShell {
               buildInputs = [
+                (lib.hiPrio rust-bin.nightly.latest.rustfmt)
                 rust-bin.stable.latest.default
               ];
             };

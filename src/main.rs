@@ -12,12 +12,12 @@ struct Args {
     file: Option<PathBuf>,
 }
 
-fn parse_and_check(src: &str) -> Result<(), String> {
+fn parse_and_check(src: &str) -> anyhow::Result<()> {
     let parsed = terminated(command, multispace0)
         .parse(LocatingSlice::new(src))
-        .map_err(|e| format!("{e}"))?;
+        .map_err(|e| anyhow::format_err!("{e}"))?;
     println!("Parsed: {parsed:#?}");
-    let (_env, checked) = parsed.check().map_err(|e| format!("{e:?}"))?;
+    let (_env, checked) = parsed.check().map_err(|e| anyhow::format_err!("{e:?}"))?;
     println!("Checked: {checked:#?}");
     let mut evalled: TermN = checked.eval();
     println!("Evalled: {evalled:#?}");

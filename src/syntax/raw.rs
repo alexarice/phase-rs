@@ -47,7 +47,7 @@ pub enum AtomR<S> {
         span: S,
     },
     Sqrt {
-        inner: TermR<S>,
+        inner: Box<AtomR<S>>,
         span: S,
     },
 }
