@@ -21,4 +21,4 @@ cargo run -- --help
 
 ## Examples
 
-Examples of common gates (and of the syntax) can be found in [tests/gates.ph](tests/gates.ph).
+Examples of common gates (and of the syntax) can be found in [examples/gates.ph](examples/gates.ph).
