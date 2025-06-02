@@ -19,6 +19,15 @@ impl KetState {
             KetState::Minus => KetState::Plus,
         }
     }
+
+    pub fn to_char(&self) -> char {
+        match self {
+            KetState::Zero => '0',
+            KetState::One => '1',
+            KetState::Plus => '+',
+            KetState::Minus => '-',
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

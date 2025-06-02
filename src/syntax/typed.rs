@@ -92,7 +92,7 @@ impl PatternT {
                 patterns.last().unwrap().get_type().1,
             ),
             PatternT::Tensor { patterns } => patterns.iter().map(PatternT::get_type).sum(),
-            PatternT::Ket { .. } => PatternType(1, 0),
+            PatternT::Ket { states } => PatternType(states.len(), 0),
             PatternT::Unitary(term) => term.get_type().to_pattern_type(),
         }
     }

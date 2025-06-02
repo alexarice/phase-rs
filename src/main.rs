@@ -21,6 +21,10 @@ fn parse_and_check(src: &str) -> Result<(), String> {
     println!("Checked: {checked:#?}");
     let evalled: TermN = checked.eval();
     println!("Checked: {evalled:#?}");
+    let quoted = evalled.quote();
+    let raw = quoted.to_raw();
+    let doc = raw.to_doc();
+    println!("Pretty printed:\n{}", doc.pretty(60));
     let unitary = evalled.to_unitary();
     for x in unitary.row_iter() {
         println!(
