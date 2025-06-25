@@ -3,8 +3,9 @@ use std::ops::Range;
 use winnow::{
     LocatingSlice, ModalResult, Parser,
     ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
-    combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq},
+    combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq, terminated},
     error::{StrContext, StrContextValue},
+    token::take_until,
 };
 
 use crate::{
@@ -63,7 +64,6 @@ fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
 	    .with_span()
 	    .map(|((pattern, inner), span)| AtomR::IfLet{ pattern, inner: Box::new(inner), span }),
 	phase.with_span().map(|(phase, span)| AtomR::Phase { phase, span }),
-	"H".span().map(|span| AtomR::Hadamard { span }),
 	identifier.with_span().map(|(name, span)| AtomR::Gate { name, span })
     )).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
      .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
@@ -143,12 +143,23 @@ fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usi
 		     identifier,
 		     _: (multispace0, "=", multispace0).context(StrContext::Expected(StrContextValue::CharLiteral('='))),
 		     tm,
-		     _: (multispace0, ",", multispace0))).context(StrContext::Label("gate definition"))
+		     _: (multispace0, ","))).context(StrContext::Label("gate definition"))
     ).parse_next(input)
 }
 
+pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
+    (
+        multispace0,
+        repeat::<_, _, (), _, _>(0.., ("//", take_until(0.., "\n"), multispace0).value(())),
+    )
+        .parse_next(input)?;
+    Ok(())
+}
+
 pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usize>>> {
-    let gates = repeat(0.., gate).parse_next(input)?;
+    comment.parse_next(input)?;
+    let gates = repeat(0.., terminated(gate, comment)).parse_next(input)?;
     let term = tm.context(StrContext::Label("Term")).parse_next(input)?;
+    comment.parse_next(input)?;
     Ok(Command { gates, term })
 }

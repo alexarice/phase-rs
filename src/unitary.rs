@@ -41,9 +41,6 @@ impl AtomN {
                 let u = inner.to_unitary();
                 proj + &inj * u * inj.adjoint()
             }
-            AtomN::Hadamard => {
-                mat![[CISQRT2, CISQRT2], [CISQRT2, -CISQRT2]]
-            }
         }
     }
 }

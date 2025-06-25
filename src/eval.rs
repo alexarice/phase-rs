@@ -86,7 +86,6 @@ impl TermT {
                 inner: Box::new(inner.eval_with_phase_mul(phase_mul)),
                 ty: pattern.get_type().0,
             }),
-            TermT::Hadamard => B::atom(AtomN::Hadamard),
             TermT::Gate { def, .. } => def.eval_with_phase_mul(phase_mul),
             TermT::Inverse { inner } => inner.eval_with_phase_mul(-phase_mul),
             TermT::Sqrt { inner } => inner.eval_with_phase_mul(phase_mul / 2.0),
@@ -192,7 +191,6 @@ impl AtomN {
                 pattern: pattern.quote(),
                 inner: Box::new(inner.quote()),
             },
-            AtomN::Hadamard => TermT::Hadamard,
         }
     }
 

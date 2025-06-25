@@ -20,7 +20,6 @@ pub enum AtomN {
         inner: Box<TermN>,
         ty: usize,
     },
-    Hadamard,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -43,7 +42,6 @@ impl AtomN {
         match self {
             AtomN::Phase { .. } => TermType(0),
             AtomN::IfLet { ty, .. } => TermType(*ty),
-            AtomN::Hadamard => TermType(1),
         }
     }
 }

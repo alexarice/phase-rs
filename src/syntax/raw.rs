@@ -35,9 +35,6 @@ pub enum AtomR<S> {
         inner: Box<AtomR<S>>,
         span: S,
     },
-    Hadamard {
-        span: S,
-    },
     Gate {
         name: String,
         span: S,
@@ -112,7 +109,6 @@ impl<S> AtomR<S> {
                 .group()
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .group(),
-            AtomR::Hadamard { .. } => RcDoc::text("H"),
             AtomR::Gate { name, .. } => RcDoc::text(name),
             AtomR::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
             AtomR::Sqrt { inner, .. } => RcDoc::text("sqrt(")

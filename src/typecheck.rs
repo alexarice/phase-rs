@@ -111,7 +111,6 @@ impl<S: Clone> AtomR<S> {
                     })
                 }
             }
-            AtomR::Hadamard { .. } => Ok(TermT::Hadamard),
             AtomR::Gate { name, span } => {
                 if let Some(def) = env.0.get(name) {
                     Ok(TermT::Gate {
@@ -230,7 +229,6 @@ impl TermT {
                 inner: Box::new(inner.to_raw_atom()),
                 span: (),
             },
-            TermT::Hadamard => AtomR::Hadamard { span: () },
             TermT::Gate { name, .. } => AtomR::Gate {
                 name: name.to_owned(),
                 span: (),

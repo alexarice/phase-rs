@@ -16,18 +16,19 @@ fn parse_and_check(src: &str) -> anyhow::Result<()> {
     let parsed = terminated(command, multispace0)
         .parse(LocatingSlice::new(src))
         .map_err(|e| anyhow::format_err!("{e}"))?;
-    println!("Parsed: {parsed:#?}");
     let (_env, checked) = parsed.check().map_err(|e| anyhow::format_err!("{e:?}"))?;
-    println!("Checked: {checked:#?}");
+    println!("Input term:\n{}\n", checked.to_raw().to_doc().pretty(60));
     let mut evalled: TermN = checked.eval();
-    println!("Evalled: {evalled:#?}");
     evalled.squash();
-    println!("Squashed: {evalled:#?}");
     let quoted = evalled.quote();
     let raw = quoted.to_raw();
-    let doc = raw.to_doc();
-    println!("Pretty printed:\n{}", doc.pretty(60));
+    println!("Evaluated:\n{}\n", raw.to_doc().pretty(60));
+    let circuit = quoted.eval_circ();
+    let circuit_quoted = circuit.quote();
+    let circuit_raw = circuit_quoted.to_raw();
+    println!("Circuit:\n{}\n", circuit_raw.to_doc().pretty(60));
     let unitary = evalled.to_unitary();
+    println!("Unitary:");
     for x in unitary.row_iter() {
         println!(
             "[ {} ]",
