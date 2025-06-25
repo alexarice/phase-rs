@@ -19,7 +19,9 @@ fn parse_and_check(src: &str) -> anyhow::Result<()> {
     let (_env, checked) = parsed.check().map_err(|e| anyhow::format_err!("{e:?}"))?;
     println!("Input term:\n{}\n", checked.to_raw().to_doc().pretty(60));
     let mut evalled: TermN = checked.eval();
+    println!("{evalled:#?}");
     evalled.squash();
+    println!("{evalled:#?}");
     let quoted = evalled.quote();
     let raw = quoted.to_raw();
     println!("Evaluated:\n{}\n", raw.to_doc().pretty(60));

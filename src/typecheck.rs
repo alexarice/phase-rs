@@ -87,10 +87,7 @@ impl<S: Clone> AtomR<S> {
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         match self {
             AtomR::Brackets { term, .. } => term.check(env, check_sqrt),
-            AtomR::Id { qubits, .. } => Ok(TermT::Comp {
-                terms: vec![],
-                ty: TermType(*qubits),
-            }),
+            AtomR::Id { qubits, .. } => Ok(TermT::Id { ty: TermType(*qubits) }),
             AtomR::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
             AtomR::IfLet { pattern, inner, .. } => {
                 let p = pattern.check(env)?;

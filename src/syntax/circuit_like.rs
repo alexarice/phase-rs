@@ -13,7 +13,6 @@ pub struct TermC {
 pub struct ClauseC {
     pub pattern: PatternC,
     pub phase: f64,
-    pub id_qubits: usize,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,15 +37,16 @@ impl TermC {
 
 impl ClauseC {
     pub fn quote(&self) -> TermT {
+	let id_qubits = self.pattern.id_qubits();
         let mut inner = TermT::Phase {
             phase: Phase::Angle(self.phase),
         };
-        if self.id_qubits != 0 {
+        if id_qubits != 0 {
             inner = TermT::Tensor {
                 terms: vec![
                     inner,
                     TermT::Id {
-                        ty: TermType(self.id_qubits),
+                        ty: TermType(id_qubits),
                     },
                 ],
             }
@@ -62,7 +62,6 @@ impl ClauseC {
         ClauseC {
             pattern: self.pattern.clone(),
             phase: -self.phase,
-            id_qubits: self.id_qubits,
         }
     }
 }
@@ -85,6 +84,10 @@ impl PatternC {
                 patterns: self.parts.iter().cloned().map(state_to_pattern).collect(),
             }
         }
+    }
+
+    pub fn id_qubits(&self) -> usize {
+	self.parts.iter().filter(|x| x.is_none()).count()
     }
 
     pub fn id(l: usize) -> Self {

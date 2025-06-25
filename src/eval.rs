@@ -67,15 +67,21 @@ impl TermT {
     fn eval_with_phase_mul<B: Buildable>(&self, phase_mul: f64) -> B {
         match self {
             TermT::Comp { terms, ty } => {
-                let mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
-                if phase_mul < 0.0 {
+                let mut mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
+                if terms.len() == 1 {
+                    mapped_terms.next().unwrap()
+                } else if phase_mul < 0.0 {
                     B::comp(mapped_terms, ty)
                 } else {
                     B::comp(mapped_terms.rev(), ty)
                 }
             }
             TermT::Tensor { terms } => {
-                B::tensor(terms.iter().map(|t| t.eval_with_phase_mul(phase_mul)))
+                if terms.len() == 1 {
+                    terms[0].eval_with_phase_mul(phase_mul)
+                } else {
+                    B::tensor(terms.iter().map(|t| t.eval_with_phase_mul(phase_mul)))
+                }
             }
             TermT::Id { ty } => B::comp(std::iter::empty(), ty),
             TermT::Phase { phase } => B::atom(AtomN::Phase {
@@ -96,13 +102,25 @@ impl TermT {
 impl PatternT {
     pub fn eval(&self) -> PatternN {
         match self {
-            PatternT::Comp { patterns } => PatternN::Comp {
-                patterns: patterns.iter().map(PatternT::eval).collect(),
-                ty: self.get_type(),
-            },
-            PatternT::Tensor { patterns } => PatternN::Tensor {
-                patterns: patterns.iter().map(PatternT::eval).collect(),
-            },
+            PatternT::Comp { patterns } => {
+                if patterns.len() == 1 {
+                    patterns[0].eval()
+                } else {
+                    PatternN::Comp {
+                        patterns: patterns.iter().map(PatternT::eval).collect(),
+                        ty: self.get_type(),
+                    }
+                }
+            }
+            PatternT::Tensor { patterns } => {
+                if patterns.len() == 1 {
+		    patterns[0].eval()
+                } else {
+                    PatternN::Tensor {
+                        patterns: patterns.iter().map(PatternT::eval).collect(),
+                    }
+                }
+            }
             PatternT::Ket { states } => PatternN::Tensor {
                 patterns: states
                     .iter()

@@ -49,7 +49,6 @@ impl TermT {
                 clauses.push(ClauseC {
                     pattern: pattern.clone(),
                     phase: phase_mul * phase.eval(),
-                    id_qubits: inj.len(),
                 });
             }
             TermT::IfLet {
