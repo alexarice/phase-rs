@@ -10,11 +10,9 @@ use winnow::{
 
 use super::{
     command::Command,
-    syntax::{
-        KetState, Phase,
-        raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
-    },
+    syntax::raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
 };
+use crate::common::{KetState, Phase};
 
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
     separated(1.., tensor, (multispace0, ';', multispace0))

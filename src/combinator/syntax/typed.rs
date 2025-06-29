@@ -1,6 +1,6 @@
 use std::iter::Sum;
 
-use super::{KetState, Phase};
+use crate::common::{KetState, Phase};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TermType(pub usize);

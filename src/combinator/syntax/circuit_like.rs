@@ -1,7 +1,5 @@
-use super::{
-    KetState, Phase,
-    typed::{PatternT, TermT, TermType},
-};
+use super::typed::{PatternT, TermT, TermType};
+use crate::common::{KetState, Phase};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TermC {
@@ -37,7 +35,7 @@ impl TermC {
 
 impl ClauseC {
     pub fn quote(&self) -> TermT {
-	let id_qubits = self.pattern.id_qubits();
+        let id_qubits = self.pattern.id_qubits();
         let mut inner = TermT::Phase {
             phase: Phase::Angle(self.phase),
         };
@@ -87,7 +85,7 @@ impl PatternC {
     }
 
     pub fn id_qubits(&self) -> usize {
-	self.parts.iter().filter(|x| x.is_none()).count()
+        self.parts.iter().filter(|x| x.is_none()).count()
     }
 
     pub fn id(l: usize) -> Self {

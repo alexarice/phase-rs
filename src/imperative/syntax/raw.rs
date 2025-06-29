@@ -5,88 +5,58 @@ use pretty::RcDoc;
 use crate::common::{KetState, Phase};
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct TermR<S> {
-    pub terms: Vec<TensorR<S>>,
-    pub span: S,
+pub struct Spanned<S, T>(T, S);
+
+pub type Copattern<S> = Spanned<S, CopatternInner<S>>;
+#[derive(Clone, Debug, PartialEq)]
+pub enum CopatternInner<S> {
+    Var { name: String },
+    Tensor { copatterns: Vec<Copattern<S>> },
 }
 
+pub type Pattern<S> = Spanned<S, PatternInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub struct TensorR<S> {
-    pub terms: Vec<AtomR<S>>,
-    pub span: S,
+pub enum PatternInner<S> {
+    Var {
+        name: String,
+    },
+    Tensor {
+        patterns: Vec<Pattern<S>>,
+        span: S,
+    },
+    Comp {
+        unitary: Box<Unitary<S>>,
+        pattern: Box<Pattern<S>>,
+        span: S,
+    },
+    Ket {
+        states: Vec<KetState>,
+        span: S,
+    },
 }
 
+pub type Unitary<S> = Spanned<S, UnitaryInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub enum AtomR<S> {
-    Brackets {
-        term: TermR<S>,
-        span: S,
-    },
-    Id {
-        qubits: usize,
-        span: S,
-    },
-    Phase {
-        phase: Phase,
-        span: S,
-    },
+pub enum UnitaryInner<S> {
+    Id,
+    Comp { unitaries: Vec<Unitary<S>> },
+    Phase { phase: Phase },
     IfLet {
-        pattern: PatternR<S>,
-        inner: Box<AtomR<S>>,
-        span: S,
+	pattern: Pattern<S>,
+	copattern: Copattern<S>,
+	inner: Box<Unitary<S>>,
     },
     Gate {
         name: String,
-        span: S,
     },
     Inverse {
-        inner: Box<AtomR<S>>,
-        span: S,
+        inner: Box<Unitary<S>>,
     },
     Sqrt {
-        inner: Box<AtomR<S>>,
-        span: S,
+        inner: Box<Unitary<S>>,
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct PatternR<S> {
-    pub patterns: Vec<PatTensorR<S>>,
-    pub span: S,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct PatTensorR<S> {
-    pub patterns: Vec<PatAtomR<S>>,
-    pub span: S,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum PatAtomR<S> {
-    Brackets { pattern: PatternR<S>, span: S },
-    Ket { states: Vec<KetState>, span: S },
-    Unitary(Box<TermR<S>>),
-}
-
-impl<S> TermR<S> {
-    pub fn to_doc(&self) -> RcDoc {
-        RcDoc::intersperse(
-            self.terms.iter().map(TensorR::to_doc),
-            RcDoc::text(";").append(RcDoc::line()),
-        )
-        .group()
-    }
-}
-
-impl<S> TensorR<S> {
-    pub fn to_doc(&self) -> RcDoc {
-        RcDoc::intersperse(
-            self.terms.iter().map(AtomR::to_doc),
-            RcDoc::line().append("x "),
-        )
-        .group()
-    }
-}
 
 impl<S> AtomR<S> {
     pub fn to_doc(&self) -> RcDoc {

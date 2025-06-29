@@ -5,10 +5,8 @@ use num_complex::Complex;
 
 const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
 
-use super::syntax::{
-    KetState,
-    normal::{AtomN, PatternN, TermN},
-};
+use super::syntax::normal::{AtomN, PatternN, TermN};
+use crate::common::KetState;
 
 impl TermN {
     pub fn to_unitary(&self) -> Mat<Complex<f64>> {

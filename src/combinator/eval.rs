@@ -1,8 +1,8 @@
 use super::syntax::{
-    Phase,
     normal::{AtomN, PatternN, TermN},
     typed::{PatternT, PatternType, TermT, TermType},
 };
+use crate::common::Phase;
 
 impl Phase {
     pub fn eval(&self) -> f64 {
@@ -114,7 +114,7 @@ impl PatternT {
             }
             PatternT::Tensor { patterns } => {
                 if patterns.len() == 1 {
-		    patterns[0].eval()
+                    patterns[0].eval()
                 } else {
                     PatternN::Tensor {
                         patterns: patterns.iter().map(PatternT::eval).collect(),

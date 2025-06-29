@@ -1,7 +1,5 @@
-use super::{
-    KetState,
-    typed::{PatternType, TermType},
-};
+use super::typed::{PatternType, TermType};
+use crate::common::KetState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TermN {
