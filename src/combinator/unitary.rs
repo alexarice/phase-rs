@@ -5,7 +5,7 @@ use num_complex::Complex;
 
 const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
 
-use crate::syntax::{
+use super::syntax::{
     KetState,
     normal::{AtomN, PatternN, TermN},
 };

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::syntax::{
+use super::syntax::{
     raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
     typed::{PatternT, PatternType, TermT, TermType},
 };

@@ -1,4 +1,4 @@
-use crate::{
+use super::{
     syntax::{raw::TermR, typed::TermT},
     typecheck::{Env, TypeCheckError},
 };

@@ -1,4 +1,4 @@
-use crate::syntax::{
+use super::syntax::{
     Phase,
     normal::{AtomN, PatternN, TermN},
     typed::{PatternT, PatternType, TermT, TermType},

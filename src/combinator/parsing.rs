@@ -8,7 +8,7 @@ use winnow::{
     token::take_until,
 };
 
-use crate::{
+use super::{
     command::Command,
     syntax::{
         KetState, Phase,

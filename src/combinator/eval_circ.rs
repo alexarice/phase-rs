@@ -1,4 +1,4 @@
-use crate::syntax::{
+use super::syntax::{
     circuit_like::{ClauseC, PatternC, TermC},
     typed::{PatternT, TermT},
 };
