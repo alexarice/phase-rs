@@ -59,13 +59,12 @@ impl TermT {
                 let mut inner_pattern = pattern.clone();
                 let mut inner_inj = inj.to_vec();
                 if_pattern.eval_circ(&mut inner_pattern, &mut inner_inj, &mut unitary_clauses);
-                for u in &unitary_clauses {
-                    clauses.push(u.invert());
-                }
+		let temp: Vec<_> = unitary_clauses.iter().rev().map(ClauseC::invert).collect();
+                clauses.extend(unitary_clauses);
 
                 inner.eval_circ_clause(&inner_pattern, &inner_inj, phase_mul, clauses);
 
-                clauses.extend(unitary_clauses.into_iter().rev())
+                clauses.extend(temp)
             }
             TermT::Gate { def, .. } => {
                 def.eval_circ_clause(pattern, inj, phase_mul, clauses);
@@ -111,7 +110,7 @@ impl PatternT {
                 }
             }
             PatternT::Unitary(term_t) => {
-                term_t.eval_circ_clause(&PatternC::id(pattern.parts.len()), inj, 1.0, clauses);
+                term_t.eval_circ_clause(&PatternC::id(pattern.parts.len()), inj, -1.0, clauses);
             }
         }
     }
