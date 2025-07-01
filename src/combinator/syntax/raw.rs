@@ -2,74 +2,69 @@ use std::borrow::Cow;
 
 use pretty::RcDoc;
 
-use crate::common::{KetState, Phase};
+use crate::common::{KetState, Phase, Spanned, ToDoc};
 
+pub type TermR<S> = Spanned<S, TermRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub struct TermR<S> {
+pub struct TermRInner<S> {
     pub terms: Vec<TensorR<S>>,
-    pub span: S,
 }
 
+pub type TensorR<S> = Spanned<S, TensorRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub struct TensorR<S> {
+pub struct TensorRInner<S> {
     pub terms: Vec<AtomR<S>>,
-    pub span: S,
 }
 
+pub type AtomR<S> = Spanned<S, AtomRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub enum AtomR<S> {
+pub enum AtomRInner<S> {
     Brackets {
         term: TermR<S>,
-        span: S,
     },
     Id {
         qubits: usize,
-        span: S,
     },
     Phase {
         phase: Phase,
-        span: S,
     },
     IfLet {
         pattern: PatternR<S>,
         inner: Box<AtomR<S>>,
-        span: S,
     },
     Gate {
         name: String,
-        span: S,
     },
     Inverse {
         inner: Box<AtomR<S>>,
-        span: S,
     },
     Sqrt {
         inner: Box<AtomR<S>>,
-        span: S,
     },
 }
 
+pub type PatternR<S> = Spanned<S, PatternRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub struct PatternR<S> {
+pub struct PatternRInner<S> {
     pub patterns: Vec<PatTensorR<S>>,
-    pub span: S,
 }
 
+pub type PatTensorR<S> = Spanned<S, PatTensorRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub struct PatTensorR<S> {
+pub struct PatTensorRInner<S> {
     pub patterns: Vec<PatAtomR<S>>,
-    pub span: S,
 }
 
+pub type PatAtomR<S> = Spanned<S, PatAtomRInner<S>>;
 #[derive(Clone, Debug, PartialEq)]
-pub enum PatAtomR<S> {
-    Brackets { pattern: PatternR<S>, span: S },
-    Ket { states: Vec<KetState>, span: S },
+pub enum PatAtomRInner<S> {
+    Brackets { pattern: PatternR<S> },
+    Ket { states: Vec<KetState> },
     Unitary(Box<TermR<S>>),
 }
 
-impl<S> TermR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for TermRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.terms.iter().map(TensorR::to_doc),
             RcDoc::text(";").append(RcDoc::line()),
@@ -78,8 +73,8 @@ impl<S> TermR<S> {
     }
 }
 
-impl<S> TensorR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for TensorRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.terms.iter().map(AtomR::to_doc),
             RcDoc::line().append("x "),
@@ -88,30 +83,30 @@ impl<S> TensorR<S> {
     }
 }
 
-impl<S> AtomR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for AtomRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         match self {
-            AtomR::Brackets { term, .. } => RcDoc::text("(")
+            AtomRInner::Brackets { term, .. } => RcDoc::text("(")
                 .append(RcDoc::line().append(term.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            AtomR::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
+            AtomRInner::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
                 Cow::Borrowed("id")
             } else {
                 Cow::Owned(format!("id{qubits}"))
             }),
-            AtomR::Phase { phase, .. } => phase.to_doc(),
-            AtomR::IfLet { pattern, inner, .. } => RcDoc::text("if let")
+            AtomRInner::Phase { phase, .. } => phase.to_doc(),
+            AtomRInner::IfLet { pattern, inner, .. } => RcDoc::text("if let")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append("then")
                 .group()
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .group(),
-            AtomR::Gate { name, .. } => RcDoc::text(name),
-            AtomR::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
-            AtomR::Sqrt { inner, .. } => RcDoc::text("sqrt(")
+            AtomRInner::Gate { name, .. } => RcDoc::text(name),
+            AtomRInner::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
+            AtomRInner::Sqrt { inner, .. } => RcDoc::text("sqrt(")
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
@@ -120,8 +115,8 @@ impl<S> AtomR<S> {
     }
 }
 
-impl<S> PatternR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatternRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.patterns.iter().map(PatTensorR::to_doc),
             RcDoc::line().append(". "),
@@ -130,8 +125,8 @@ impl<S> PatternR<S> {
     }
 }
 
-impl<S> PatTensorR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatTensorRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.patterns.iter().map(PatAtomR::to_doc),
             RcDoc::line().append("x "),
@@ -140,19 +135,19 @@ impl<S> PatTensorR<S> {
     }
 }
 
-impl<S> PatAtomR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatAtomRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         match self {
-            PatAtomR::Brackets { pattern, .. } => RcDoc::text("(")
+            PatAtomRInner::Brackets { pattern, .. } => RcDoc::text("(")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            PatAtomR::Ket { states, .. } => RcDoc::text(format!(
+            PatAtomRInner::Ket { states, .. } => RcDoc::text(format!(
                 "|{}>",
                 states.iter().map(KetState::to_char).collect::<String>()
             )),
-            PatAtomR::Unitary(term_r) => term_r.to_doc(),
+            PatAtomRInner::Unitary(term_r) => term_r.to_doc(),
         }
     }
 }

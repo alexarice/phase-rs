@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use super::syntax::{
-    raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
+    raw::{
+        AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
+        PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
+    },
     typed::{PatternT, PatternType, TermT, TermType},
 };
 
@@ -41,14 +44,14 @@ pub struct Env(pub(crate) HashMap<String, TermT>);
 impl<S: Clone> TermR<S> {
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         if let Some(span) = check_sqrt {
-            if self.terms.len() != 1 {
+            if self.inner.terms.len() != 1 {
                 return Err(TypeCheckError::TermNotRootable {
                     tm: self.clone(),
                     span_of_root: span.clone(),
                 });
             }
         }
-        let mut term_iter = self.terms.iter();
+        let mut term_iter = self.inner.terms.iter();
         let mut raw = term_iter.next().unwrap();
         let t = raw.check(env, check_sqrt)?;
         let ty1 = t.get_type();
@@ -75,6 +78,7 @@ impl<S: Clone> TensorR<S> {
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         Ok(TermT::Tensor {
             terms: self
+                .inner
                 .terms
                 .iter()
                 .map(|t| t.check(env, check_sqrt))
@@ -85,11 +89,13 @@ impl<S: Clone> TensorR<S> {
 
 impl<S: Clone> AtomR<S> {
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
-        match self {
-            AtomR::Brackets { term, .. } => term.check(env, check_sqrt),
-            AtomR::Id { qubits, .. } => Ok(TermT::Id { ty: TermType(*qubits) }),
-            AtomR::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
-            AtomR::IfLet { pattern, inner, .. } => {
+        match &self.inner {
+            AtomRInner::Brackets { term, .. } => term.check(env, check_sqrt),
+            AtomRInner::Id { qubits, .. } => Ok(TermT::Id {
+                ty: TermType(*qubits),
+            }),
+            AtomRInner::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
+            AtomRInner::IfLet { pattern, inner, .. } => {
                 let p = pattern.check(env)?;
                 let t = inner.check(env, check_sqrt)?;
                 let pty = p.get_type();
@@ -108,7 +114,7 @@ impl<S: Clone> AtomR<S> {
                     })
                 }
             }
-            AtomR::Gate { name, span } => {
+            AtomRInner::Gate { name } => {
                 if let Some(def) = env.0.get(name) {
                     Ok(TermT::Gate {
                         name: name.clone(),
@@ -117,21 +123,21 @@ impl<S: Clone> AtomR<S> {
                 } else {
                     Err(TypeCheckError::UnknownSymbol {
                         name: name.to_owned(),
-                        span: span.clone(),
+                        span: self.span.clone(),
                     })
                 }
             }
-            AtomR::Inverse { inner, .. } => {
+            AtomRInner::Inverse { inner, .. } => {
                 let inner_t = inner.check(env, check_sqrt)?;
                 Ok(TermT::Inverse {
                     inner: Box::new(inner_t),
                 })
             }
-            AtomR::Sqrt { inner, span } => {
+            AtomRInner::Sqrt { inner } => {
                 let inner_t = if check_sqrt.is_some() {
                     inner.check(env, None)?
                 } else {
-                    inner.check(env, Some(span))?
+                    inner.check(env, Some(&self.span))?
                 };
 
                 Ok(TermT::Sqrt {
@@ -144,7 +150,7 @@ impl<S: Clone> AtomR<S> {
 
 impl<S: Clone> PatternR<S> {
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
-        let mut pattern_iter = self.patterns.iter();
+        let mut pattern_iter = self.inner.patterns.iter();
         let mut raw = pattern_iter.next().unwrap();
         let p = raw.check(env)?;
         let mut ty1 = p.get_type();
@@ -172,6 +178,7 @@ impl<S: Clone> PatTensorR<S> {
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         Ok(PatternT::Tensor {
             patterns: self
+                .inner
                 .patterns
                 .iter()
                 .map(|p| p.check(env))
@@ -182,12 +189,14 @@ impl<S: Clone> PatTensorR<S> {
 
 impl<S: Clone> PatAtomR<S> {
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
-        match self {
-            PatAtomR::Brackets { pattern, .. } => pattern.check(env),
-            PatAtomR::Ket { states, .. } => Ok(PatternT::Ket {
+        match &self.inner {
+            PatAtomRInner::Brackets { pattern, .. } => pattern.check(env),
+            PatAtomRInner::Ket { states, .. } => Ok(PatternT::Ket {
                 states: states.clone(),
             }),
-            PatAtomR::Unitary(term_r) => Ok(PatternT::Unitary(Box::new(term_r.check(env, None)?))),
+            PatAtomRInner::Unitary(term_r) => {
+                Ok(PatternT::Unitary(Box::new(term_r.check(env, None)?)))
+            }
         }
     }
 }
@@ -199,7 +208,7 @@ impl TermT {
         } else {
             vec![self.to_raw_tensor()]
         };
-        TermR { terms, span: () }
+        TermRInner { terms }.into()
     }
 
     fn to_raw_tensor(&self) -> TensorR<()> {
@@ -208,41 +217,29 @@ impl TermT {
         } else {
             vec![self.to_raw_atom()]
         };
-        TensorR { terms, span: () }
+        TensorRInner { terms }.into()
     }
 
     fn to_raw_atom(&self) -> AtomR<()> {
         match self {
-            TermT::Id { ty } => AtomR::Id {
-                qubits: ty.0,
-                span: (),
-            },
-            TermT::Phase { phase } => AtomR::Phase {
-                phase: *phase,
-                span: (),
-            },
-            TermT::IfLet { pattern, inner } => AtomR::IfLet {
+            TermT::Id { ty } => AtomRInner::Id { qubits: ty.0 },
+            TermT::Phase { phase } => AtomRInner::Phase { phase: *phase },
+            TermT::IfLet { pattern, inner } => AtomRInner::IfLet {
                 pattern: pattern.to_raw(),
                 inner: Box::new(inner.to_raw_atom()),
-                span: (),
             },
-            TermT::Gate { name, .. } => AtomR::Gate {
+            TermT::Gate { name, .. } => AtomRInner::Gate {
                 name: name.to_owned(),
-                span: (),
             },
-            TermT::Inverse { inner } => AtomR::Inverse {
+            TermT::Inverse { inner } => AtomRInner::Inverse {
                 inner: Box::new(inner.to_raw_atom()),
-                span: (),
             },
-            TermT::Sqrt { inner } => AtomR::Sqrt {
+            TermT::Sqrt { inner } => AtomRInner::Sqrt {
                 inner: Box::new(inner.to_raw_atom()),
-                span: (),
             },
-            t => AtomR::Brackets {
-                term: t.to_raw(),
-                span: (),
-            },
+            t => AtomRInner::Brackets { term: t.to_raw() },
         }
+        .into()
     }
 }
 
@@ -253,7 +250,7 @@ impl PatternT {
         } else {
             vec![self.to_raw_tensor()]
         };
-        PatternR { patterns, span: () }
+        PatternRInner { patterns }.into()
     }
 
     fn to_raw_tensor(&self) -> PatTensorR<()> {
@@ -262,20 +259,19 @@ impl PatternT {
         } else {
             vec![self.to_raw_atom()]
         };
-        PatTensorR { patterns, span: () }
+        PatTensorRInner { patterns }.into()
     }
 
     fn to_raw_atom(&self) -> PatAtomR<()> {
         match self {
-            PatternT::Ket { states } => PatAtomR::Ket {
+            PatternT::Ket { states } => PatAtomRInner::Ket {
                 states: states.clone(),
-                span: (),
             },
-            PatternT::Unitary(term_t) => PatAtomR::Unitary(Box::new(term_t.to_raw())),
-            p => PatAtomR::Brackets {
+            PatternT::Unitary(term_t) => PatAtomRInner::Unitary(Box::new(term_t.to_raw())),
+            p => PatAtomRInner::Brackets {
                 pattern: p.to_raw(),
-                span: (),
             },
         }
+        .into()
     }
 }
