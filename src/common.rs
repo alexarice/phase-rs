@@ -1,7 +1,13 @@
 use std::ops::Range;
 
 use pretty::RcDoc;
-use winnow::{LocatingSlice, Parser};
+use winnow::{
+    LocatingSlice, ModalResult, Parser,
+    ascii::alphanumeric0,
+    error::{StrContext, StrContextValue},
+    stream::AsChar,
+    token::any,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Spanned<S, T> {
@@ -34,6 +40,17 @@ impl<T> From<T> for Spanned<(), T> {
             span: (),
         }
     }
+}
+
+pub fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
+    (any.verify(|c| AsChar::is_alpha(c)), alphanumeric0)
+        .take()
+        .map(|s: &str| s.to_owned())
+        .context(StrContext::Label("identifier"))
+        .context(StrContext::Expected(StrContextValue::Description(
+            "alphanumeric string",
+        )))
+        .parse_next(input)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

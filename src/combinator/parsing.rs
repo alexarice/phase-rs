@@ -2,10 +2,9 @@ use std::ops::Range;
 
 use winnow::{
     LocatingSlice, ModalResult, Parser,
-    ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
+    ascii::{dec_uint, float, multispace0, multispace1, till_line_ending},
     combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq, terminated},
     error::{StrContext, StrContextValue},
-    token::take_until,
 };
 
 use super::{
@@ -15,7 +14,7 @@ use super::{
         PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
     },
 };
-use crate::common::{KetState, Phase, Spanned, parse_spanned};
+use crate::common::{KetState, Phase, Spanned, identifier, parse_spanned};
 
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
     parse_spanned(
@@ -132,16 +131,6 @@ fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<u
     .parse_next(input)
 }
 
-fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
-    alphanumeric1
-        .map(|s: &str| s.to_owned())
-        .context(StrContext::Label("identifier"))
-        .context(StrContext::Expected(StrContextValue::Description(
-            "alphanumeric string",
-        )))
-        .parse_next(input)
-}
-
 fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usize>>)> {
     preceded(
 	"gate",
@@ -156,7 +145,7 @@ fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usi
 pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
     (
         multispace0,
-        repeat::<_, _, (), _, _>(0.., ("//", take_until(0.., "\n"), multispace0).value(())),
+        repeat::<_, _, (), _, _>(0.., ("//", till_line_ending, multispace0).value(())),
     )
         .parse_next(input)?;
     Ok(())
