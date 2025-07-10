@@ -1,9 +1,17 @@
 //! Syntax definitions for raw, typed, normal, and circuit-normal syntax.
 
+use pretty::RcDoc;
+
 pub mod circuit_normal;
 pub mod normal;
 pub mod raw;
 pub mod typed;
+
+/// Trait for types which can be pretty-printed
+pub trait ToDoc {
+    /// Produce an `RcDoc` for pretty-printing.
+    fn to_doc(&self) -> RcDoc;
+}
 
 /// Holds the value of a ket pattern.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -66,6 +74,17 @@ impl Phase {
             Phase::MinusImag
         } else {
             Phase::Angle(f)
+        }
+    }
+}
+
+impl ToDoc for Phase {
+    fn to_doc(&self) -> RcDoc {
+        match self {
+            Phase::Angle(a) => RcDoc::text(format!("ph({a}pi)")),
+            Phase::MinusOne => RcDoc::text("-1"),
+            Phase::Imag => RcDoc::text("i"),
+            Phase::MinusImag => RcDoc::text("-i"),
         }
     }
 }

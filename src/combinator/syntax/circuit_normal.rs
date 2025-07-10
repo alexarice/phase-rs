@@ -25,7 +25,6 @@ pub(crate) struct ClauseC {
     pub(crate) phase: f64,
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PatternC {
     pub(crate) parts: Vec<Option<KetState>>,
@@ -36,9 +35,7 @@ impl TermC {
     /// Realises that all circuit-normal-form terms are also terms.
     pub fn quote(&self) -> TermT {
         match self.clauses.len() {
-            0 => TermT::Id {
-                ty: self.ty,
-            },
+            0 => TermT::Id { ty: self.ty },
             1 => self.clauses[0].quote(),
             _ => TermT::Comp {
                 terms: self.clauses.iter().map(ClauseC::quote).collect(),
@@ -50,7 +47,7 @@ impl TermC {
 
 impl ClauseC {
     pub(crate) fn quote(&self) -> TermT {
-	let id_qubits = self.pattern.id_qubits();
+        let id_qubits = self.pattern.id_qubits();
         let mut inner = TermT::Phase {
             phase: Phase::Angle(self.phase),
         };
@@ -81,7 +78,9 @@ impl ClauseC {
 
 fn state_to_pattern(s: Option<KetState>) -> PatternT {
     s.map_or(
-        PatternT::Unitary(Box::new(TermT::Id { ty: TermType(1) })),
+        PatternT::Unitary {
+            inner: Box::new(TermT::Id { ty: TermType(1) }),
+        },
         |state| PatternT::Ket {
             states: vec![state],
         },
@@ -100,7 +99,7 @@ impl PatternC {
     }
 
     pub(crate) fn id_qubits(&self) -> usize {
-	self.parts.iter().filter(|x| x.is_none()).count()
+        self.parts.iter().filter(|x| x.is_none()).count()
     }
 
     pub(crate) fn id(l: usize) -> Self {

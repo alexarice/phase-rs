@@ -1,7 +1,10 @@
 use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
-use phase_rs::combinator::{parsing::command, syntax::normal::TermN};
+use phase_rs::combinator::{
+    parsing::command,
+    syntax::{ToDoc, normal::TermN},
+};
 use winnow::{LocatingSlice, Parser, ascii::multispace0, combinator::terminated};
 
 /// Interpreter for "it's just a phase"

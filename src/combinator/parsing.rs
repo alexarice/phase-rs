@@ -14,25 +14,30 @@ use super::{
     command::Command,
     syntax::{
         KetState, Phase,
-        raw::{AtomR, PatAtomR, PatTensorR, PatternR, TensorR, TermR},
+        raw::{
+            AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
+            PatternRInner, Spanned, TensorR, TensorRInner, TermR, TermRInner, parse_spanned,
+        },
     },
 };
 
 /// Parser for terms.
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
-    separated(1.., tensor, (multispace0, ';', multispace0))
-        .context(StrContext::Label("term"))
-        .with_span()
-        .map(|(v, span)| TermR { terms: v, span })
-        .parse_next(input)
+    parse_spanned(
+        separated(1.., tensor, (multispace0, ';', multispace0))
+            .context(StrContext::Label("term"))
+            .map(|terms| TermRInner { terms }),
+    )
+    .parse_next(input)
 }
 
 fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>> {
-    separated(1.., atom, (multispace0, 'x', multispace0))
-        .context(StrContext::Label("term"))
-        .with_span()
-        .map(|(v, span)| TensorR { terms: v, span })
-        .parse_next(input)
+    parse_spanned(
+        separated(1.., atom, (multispace0, 'x', multispace0))
+            .context(StrContext::Label("term"))
+            .map(|terms| TensorRInner { terms }),
+    )
+    .parse_next(input)
 }
 
 /// Parser for phases.
@@ -52,56 +57,61 @@ pub fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
 }
 
 fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
-    (alt((
-	delimited(("(", multispace0),
-		  cut_err(tm),
-		  cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
-	    .with_span()
-	    .map(|(term, span)| AtomR::Brackets { term, span }),
-	preceded(("sqrt", multispace0), cut_err(atom))
-	    .with_span()
-	    .map(|(inner, span)| AtomR::Sqrt { inner: Box::new(inner), span }),
-	preceded("id", opt(dec_uint))
-	    .with_span()
-	    .map(|(qubits, span)| AtomR::Id { qubits: qubits.unwrap_or(1), span }),
-	preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
-	    .with_span()
-	    .map(|((pattern, inner), span)| AtomR::IfLet{ pattern, inner: Box::new(inner), span }),
-	phase.with_span().map(|(phase, span)| AtomR::Phase { phase, span }),
-	identifier.with_span().map(|(name, span)| AtomR::Gate { name, span })
-    )).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
-     .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
-     .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
-     .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
-     .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
-     .context(StrContext::Expected(StrContextValue::Description("identifier"))),
-     opt((multispace0, "^", multispace0, cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1")))))).context(StrContext::Label("term"))
+    parse_spanned((
+	alt((
+	    delimited(("(", multispace0),
+		      cut_err(tm),
+		      cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
+		.map(|term| AtomRInner::Brackets { term }),
+	    preceded(("sqrt", multispace0), cut_err(atom))
+		.map(|inner| AtomRInner::Sqrt { inner: Box::new(inner) }),
+	    preceded("id", opt(dec_uint))
+		.map(|qubits| AtomRInner::Id { qubits: qubits.unwrap_or(1) }),
+	    preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
+	    .map(|(pattern, inner)| AtomRInner::IfLet{ pattern, inner: Box::new(inner) }),
+	    phase.map(|phase| AtomRInner::Phase { phase }),
+	    identifier.map(|name| AtomRInner::Gate { name })
+	)).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
+	    .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
+	    .context(StrContext::Expected(StrContextValue::Description("identifier"))),
+	opt((
+	    multispace0,
+	    "^",
+	    multispace0,
+	    cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1"))),
+	)).context(StrContext::Label("term"))
+    )
 	.with_span()
 	.map(|((inner, invert), span)| {
 	    if invert.is_some() {
-		AtomR::Inverse { inner: Box::new(inner) , span }
+		AtomRInner::Inverse { inner: Box::new(Spanned { inner, span }) }
 	    } else {
 		inner
-	    }})
+	    }}))
 	.parse_next(input)
 }
 
 /// Parse a pattern
-pub fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
-    separated(1.., pattern_tensor, (multispace0, '.', multispace0))
-        .with_span()
-        .map(|(v, span)| PatternR { patterns: v, span })
-        .parse_next(input)
+fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
+    parse_spanned(
+        separated(1.., pattern_tensor, (multispace0, '.', multispace0))
+            .map(|patterns| PatternRInner { patterns }),
+    )
+    .parse_next(input)
 }
 
 fn pattern_tensor(input: &mut LocatingSlice<&str>) -> ModalResult<PatTensorR<Range<usize>>> {
-    separated(1.., pattern_atom, (multispace0, 'x', multispace0))
-        .with_span()
-        .map(|(v, span)| PatTensorR { patterns: v, span })
-        .parse_next(input)
+    parse_spanned(
+        separated(1.., pattern_atom, (multispace0, 'x', multispace0))
+            .map(|patterns| PatTensorRInner { patterns }),
+    )
+    .parse_next(input)
 }
 
-fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
+fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomRInner<Range<usize>>> {
     delimited(
         "|",
         repeat(
@@ -115,19 +125,17 @@ fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
         ),
         ">",
     )
-    .with_span()
-    .map(|(states, span)| PatAtomR::Ket { states, span })
+    .map(|states| PatAtomRInner::Ket { states })
     .parse_next(input)
 }
 
 fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
-    alt((
+    parse_spanned(alt((
         delimited(("(", multispace0), pattern, (multispace0, ")"))
-            .with_span()
-            .map(|(pattern, span)| PatAtomR::Brackets { pattern, span }),
+            .map(|pattern| PatAtomRInner::Brackets { pattern }),
         ket,
-        tm.map(|x| PatAtomR::Unitary(Box::new(x))),
-    ))
+        tm.map(|x| PatAtomRInner::Unitary { inner: Box::new(x) }),
+    )))
     .parse_next(input)
 }
 

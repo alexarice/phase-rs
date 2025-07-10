@@ -128,7 +128,7 @@ impl PatternT {
             }
             PatternT::Tensor { patterns } => {
                 if patterns.len() == 1 {
-		    patterns[0].eval()
+                    patterns[0].eval()
                 } else {
                     PatternN::Tensor {
                         patterns: patterns.iter().map(PatternT::eval).collect(),
@@ -141,7 +141,7 @@ impl PatternT {
                     .map(|&state| PatternN::Ket { state })
                     .collect(),
             },
-            PatternT::Unitary(term_t) => term_t.eval(),
+            PatternT::Unitary { inner } => inner.eval(),
         }
     }
 }
@@ -244,7 +244,9 @@ impl PatternN {
         match self {
             PatternN::Comp { patterns, ty } => {
                 if patterns.is_empty() {
-                    PatternT::Unitary(Box::new(TermT::Id { ty: TermType(ty.0) }))
+                    PatternT::Unitary {
+                        inner: Box::new(TermT::Id { ty: TermType(ty.0) }),
+                    }
                 } else {
                     PatternT::Comp {
                         patterns: patterns.iter().map(PatternN::quote).collect(),
@@ -257,7 +259,9 @@ impl PatternN {
             PatternN::Ket { state } => PatternT::Ket {
                 states: vec![*state],
             },
-            PatternN::Unitary(atom_n) => PatternT::Unitary(Box::new(atom_n.quote())),
+            PatternN::Unitary(atom_n) => PatternT::Unitary {
+                inner: Box::new(atom_n.quote()),
+            },
         }
     }
 

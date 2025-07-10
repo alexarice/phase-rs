@@ -3,78 +3,137 @@
 //! Raw syntax is used primarily for parsing and printed.
 //! It is not assumed to be typechecked/well-formed.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Range};
 
 use pretty::RcDoc;
+use winnow::{LocatingSlice, Parser};
 
 use super::{KetState, Phase};
+use crate::combinator::syntax::ToDoc;
 
+/// Wraps data of type `T` in a span of type `S`, locating it in the source text.
+/// The span is ignored when printing.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TermR<S> {
+pub struct Spanned<S, T> {
+    pub inner: T,
+    pub span: S,
+}
+
+/// Parse a `Spanned<Range<usize>, T>` using a parser for `T`.
+pub fn parse_spanned<'a, T, E>(
+    inner: impl Parser<LocatingSlice<&'a str>, T, E>,
+) -> impl Parser<LocatingSlice<&'a str>, Spanned<Range<usize>, T>, E> {
+    inner
+        .with_span()
+        .map(|(t, span)| Spanned { inner: t, span })
+}
+
+impl<S, T: ToDoc> ToDoc for Spanned<S, T> {
+    fn to_doc(&self) -> RcDoc {
+        self.inner.to_doc()
+    }
+}
+
+impl<T> From<T> for Spanned<(), T> {
+    fn from(value: T) -> Self {
+        Spanned {
+            inner: value,
+            span: (),
+        }
+    }
+}
+
+/// Raw syntax term with text span.
+/// Represents a list of tensored terms composed together.
+pub type TermR<S> = Spanned<S, TermRInner<S>>;
+
+/// Raw syntax term without text span.
+/// Represents a list of tensored terms composed together.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TermRInner<S> {
     pub(crate) terms: Vec<TensorR<S>>,
-    pub(crate) span: S,
 }
 
+/// Raw syntax tensored term with text span.
+/// Represents a list of atoms tensored together.
+pub type TensorR<S> = Spanned<S, TensorRInner<S>>;
+
+/// Raw syntax tensored term without text span.
+/// Represents a list of atoms tensored together.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TensorR<S> {
+pub struct TensorRInner<S> {
     pub(crate) terms: Vec<AtomR<S>>,
-    pub(crate) span: S,
 }
 
+/// Raw syntax atom with text span.
+/// Represents a term other than a tensor or composition (or a composition/tensor in brackets)
+pub type AtomR<S> = Spanned<S, AtomRInner<S>>;
+
+/// Raw syntax atom without text span.
+/// Represents a term other than a tensor or composition (or a composition/tensor in brackets)
 #[derive(Clone, Debug, PartialEq)]
-pub enum AtomR<S> {
+pub enum AtomRInner<S> {
     Brackets {
         term: TermR<S>,
-        span: S,
     },
     Id {
         qubits: usize,
-        span: S,
     },
     Phase {
         phase: Phase,
-        span: S,
     },
     IfLet {
         pattern: PatternR<S>,
         inner: Box<AtomR<S>>,
-        span: S,
     },
     Gate {
         name: String,
-        span: S,
     },
     Inverse {
         inner: Box<AtomR<S>>,
-        span: S,
     },
     Sqrt {
         inner: Box<AtomR<S>>,
-        span: S,
     },
 }
 
+/// Raw syntax pattern with text span.
+/// Represents a list of tensored patterns composed together.
+pub type PatternR<S> = Spanned<S, PatternRInner<S>>;
+
+/// Raw syntax pattern without text span.
+/// Represents a list of tensored patterns composed together.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PatternR<S> {
+pub struct PatternRInner<S> {
     pub(crate) patterns: Vec<PatTensorR<S>>,
-    pub(crate) span: S,
 }
 
+/// Raw syntax tensored pattern with text span.
+/// Represents a list of pattern atoms tensored together.
+pub type PatTensorR<S> = Spanned<S, PatTensorRInner<S>>;
+
+/// Raw syntax tensored pattern without text span.
+/// Represents a list of pattern atoms tensored together.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PatTensorR<S> {
+pub struct PatTensorRInner<S> {
     pub(crate) patterns: Vec<PatAtomR<S>>,
-    pub(crate) span: S,
 }
 
+/// Raw syntax pattern atom with text span.
+/// Represents a pattern other than a tensor or composition (or a composition/tensor in brackets)
+pub type PatAtomR<S> = Spanned<S, PatAtomRInner<S>>;
+
+/// Raw syntax pattern atom without text span.
+/// Represents a pattern other than a tensor or composition (or a composition/tensor in brackets)
 #[derive(Clone, Debug, PartialEq)]
-pub enum PatAtomR<S> {
-    Brackets { pattern: PatternR<S>, span: S },
-    Ket { states: Vec<KetState>, span: S },
-    Unitary(Box<TermR<S>>),
+pub enum PatAtomRInner<S> {
+    Brackets { pattern: PatternR<S> },
+    Ket { states: Vec<KetState> },
+    Unitary { inner: Box<TermR<S>> },
 }
 
-impl<S> TermR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for TermRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.terms.iter().map(TensorR::to_doc),
             RcDoc::text(";").append(RcDoc::line()),
@@ -83,8 +142,8 @@ impl<S> TermR<S> {
     }
 }
 
-impl<S> TensorR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for TensorRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.terms.iter().map(AtomR::to_doc),
             RcDoc::line().append("x "),
@@ -93,30 +152,30 @@ impl<S> TensorR<S> {
     }
 }
 
-impl<S> AtomR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for AtomRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         match self {
-            AtomR::Brackets { term, .. } => RcDoc::text("(")
+            AtomRInner::Brackets { term, .. } => RcDoc::text("(")
                 .append(RcDoc::line().append(term.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            AtomR::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
+            AtomRInner::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
                 Cow::Borrowed("id")
             } else {
                 Cow::Owned(format!("id{qubits}"))
             }),
-            AtomR::Phase { phase, .. } => phase.to_doc(),
-            AtomR::IfLet { pattern, inner, .. } => RcDoc::text("if let")
+            AtomRInner::Phase { phase, .. } => phase.to_doc(),
+            AtomRInner::IfLet { pattern, inner, .. } => RcDoc::text("if let")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append("then")
                 .group()
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .group(),
-            AtomR::Gate { name, .. } => RcDoc::text(name),
-            AtomR::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
-            AtomR::Sqrt { inner, .. } => RcDoc::text("sqrt(")
+            AtomRInner::Gate { name, .. } => RcDoc::text(name),
+            AtomRInner::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
+            AtomRInner::Sqrt { inner, .. } => RcDoc::text("sqrt(")
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
@@ -125,19 +184,8 @@ impl<S> AtomR<S> {
     }
 }
 
-impl Phase {
-    pub fn to_doc(&self) -> RcDoc {
-        match self {
-            Phase::Angle(a) => RcDoc::text(format!("ph({a}pi)")),
-            Phase::MinusOne => RcDoc::text("-1"),
-            Phase::Imag => RcDoc::text("i"),
-            Phase::MinusImag => RcDoc::text("-i"),
-        }
-    }
-}
-
-impl<S> PatternR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatternRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.patterns.iter().map(PatTensorR::to_doc),
             RcDoc::line().append(". "),
@@ -146,8 +194,8 @@ impl<S> PatternR<S> {
     }
 }
 
-impl<S> PatTensorR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatTensorRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         RcDoc::intersperse(
             self.patterns.iter().map(PatAtomR::to_doc),
             RcDoc::line().append("x "),
@@ -156,19 +204,19 @@ impl<S> PatTensorR<S> {
     }
 }
 
-impl<S> PatAtomR<S> {
-    pub fn to_doc(&self) -> RcDoc {
+impl<S> ToDoc for PatAtomRInner<S> {
+    fn to_doc(&self) -> RcDoc {
         match self {
-            PatAtomR::Brackets { pattern, .. } => RcDoc::text("(")
+            PatAtomRInner::Brackets { pattern, .. } => RcDoc::text("(")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            PatAtomR::Ket { states, .. } => RcDoc::text(format!(
+            PatAtomRInner::Ket { states, .. } => RcDoc::text(format!(
                 "|{}>",
                 states.iter().map(KetState::to_char).collect::<String>()
             )),
-            PatAtomR::Unitary(term_r) => term_r.to_doc(),
+            PatAtomRInner::Unitary { inner } => inner.to_doc(),
         }
     }
 }

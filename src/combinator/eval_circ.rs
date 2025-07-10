@@ -62,7 +62,7 @@ impl TermT {
                 let mut inner_pattern = pattern.clone();
                 let mut inner_inj = inj.to_vec();
                 if_pattern.eval_circ(&mut inner_pattern, &mut inner_inj, &mut unitary_clauses);
-		let temp: Vec<_> = unitary_clauses.iter().rev().map(ClauseC::invert).collect();
+                let temp: Vec<_> = unitary_clauses.iter().rev().map(ClauseC::invert).collect();
                 clauses.extend(unitary_clauses);
 
                 inner.eval_circ_clause(&inner_pattern, &inner_inj, phase_mul, clauses);
@@ -83,12 +83,7 @@ impl TermT {
 }
 
 impl PatternT {
-    fn eval_circ(
-        &self,
-        pattern: &mut PatternC,
-        inj: &mut Vec<usize>,
-        clauses: &mut Vec<ClauseC>,
-    ) {
+    fn eval_circ(&self, pattern: &mut PatternC, inj: &mut Vec<usize>, clauses: &mut Vec<ClauseC>) {
         match self {
             PatternT::Comp { patterns } => {
                 for p in patterns {
@@ -112,8 +107,8 @@ impl PatternT {
                     pattern.parts[i] = Some(*state)
                 }
             }
-            PatternT::Unitary(term_t) => {
-                term_t.eval_circ_clause(pattern, inj, -1.0, clauses);
+            PatternT::Unitary { inner } => {
+                inner.eval_circ_clause(pattern, inj, -1.0, clauses);
             }
         }
     }

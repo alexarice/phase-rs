@@ -79,7 +79,7 @@ pub enum PatternT {
     Comp { patterns: Vec<PatternT> },
     Tensor { patterns: Vec<PatternT> },
     Ket { states: Vec<KetState> },
-    Unitary(Box<TermT>),
+    Unitary { inner: Box<TermT> },
 }
 
 impl PatternT {
@@ -91,7 +91,7 @@ impl PatternT {
             ),
             PatternT::Tensor { patterns } => patterns.iter().map(PatternT::get_type).sum(),
             PatternT::Ket { states } => PatternType(states.len(), 0),
-            PatternT::Unitary(term) => term.get_type().to_pattern_type(),
+            PatternT::Unitary { inner } => inner.get_type().to_pattern_type(),
         }
     }
 }
