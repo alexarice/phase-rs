@@ -1,3 +1,5 @@
+//! Functions and datastructures for type checking
+
 use std::collections::HashMap;
 
 use super::syntax::{
@@ -5,40 +7,48 @@ use super::syntax::{
     typed::{PatternT, PatternType, TermT, TermType},
 };
 
+/// Errors that can occur during typechecking.
 #[derive(Debug, Clone)]
 pub enum TypeCheckError<S> {
+    /// Error for mismatching type between terms in a composition.
     TypeMismatch {
         t1: TensorR<S>,
         ty1: TermType,
         t2: TensorR<S>,
         ty2: TermType,
     },
+    /// Error for mismatching type between a term and pattern in an "if let" statement.
     IfTypeMismatch {
         p: PatternR<S>,
         pty: PatternType,
         t: AtomR<S>,
         tty: TermType,
     },
+    /// Error for mismatching type between composed patterns.
     PatternTypeMismatch {
         p1: PatTensorR<S>,
         ty1: PatternType,
         p2: PatTensorR<S>,
         ty2: PatternType,
     },
+    /// Error for an unknown top-level symbol.
     UnknownSymbol {
         name: String,
         span: S,
     },
+    /// Error for when a sqrt operation is applied to a term with compositions.
     TermNotRootable {
         tm: TermR<S>,
         span_of_root: S,
     },
 }
 
+/// Typing enviroment, holding definitions of top level symbols.
 #[derive(Default)]
 pub struct Env(pub(crate) HashMap<String, TermT>);
 
 impl<S: Clone> TermR<S> {
+    /// Type check a term in a given typing environment
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         if let Some(span) = check_sqrt {
             if self.terms.len() != 1 {
@@ -72,7 +82,7 @@ impl<S: Clone> TermR<S> {
 }
 
 impl<S: Clone> TensorR<S> {
-    pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
+    fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         Ok(TermT::Tensor {
             terms: self
                 .terms
@@ -84,7 +94,7 @@ impl<S: Clone> TensorR<S> {
 }
 
 impl<S: Clone> AtomR<S> {
-    pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
+    fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         match self {
             AtomR::Brackets { term, .. } => term.check(env, check_sqrt),
             AtomR::Id { qubits, .. } => Ok(TermT::Id { ty: TermType(*qubits) }),
@@ -143,6 +153,7 @@ impl<S: Clone> AtomR<S> {
 }
 
 impl<S: Clone> PatternR<S> {
+    /// Type check a pattern in a given typing environment
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         let mut pattern_iter = self.patterns.iter();
         let mut raw = pattern_iter.next().unwrap();
@@ -169,7 +180,7 @@ impl<S: Clone> PatternR<S> {
 }
 
 impl<S: Clone> PatTensorR<S> {
-    pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
+    fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         Ok(PatternT::Tensor {
             patterns: self
                 .patterns
@@ -181,7 +192,7 @@ impl<S: Clone> PatTensorR<S> {
 }
 
 impl<S: Clone> PatAtomR<S> {
-    pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
+    fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         match self {
             PatAtomR::Brackets { pattern, .. } => pattern.check(env),
             PatAtomR::Ket { states, .. } => Ok(PatternT::Ket {
@@ -193,6 +204,7 @@ impl<S: Clone> PatAtomR<S> {
 }
 
 impl TermT {
+    /// Convert to a raw term.
     pub fn to_raw(&self) -> TermR<()> {
         let terms = if let TermT::Comp { terms, .. } = self {
             terms.iter().map(|t| t.to_raw_tensor()).collect()
@@ -247,6 +259,7 @@ impl TermT {
 }
 
 impl PatternT {
+    /// Convert to a raw pattern.
     pub fn to_raw(&self) -> PatternR<()> {
         let patterns = if let PatternT::Comp { patterns } = self {
             patterns.iter().map(|t| t.to_raw_tensor()).collect()

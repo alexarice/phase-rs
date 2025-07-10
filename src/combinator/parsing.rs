@@ -1,3 +1,5 @@
+//! Parsing functions for raw syntax.
+
 use std::ops::Range;
 
 use winnow::{
@@ -16,6 +18,7 @@ use super::{
     },
 };
 
+/// Parser for terms.
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
     separated(1.., tensor, (multispace0, ';', multispace0))
         .context(StrContext::Label("term"))
@@ -32,7 +35,8 @@ fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>>
         .parse_next(input)
 }
 
-fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
+/// Parser for phases.
+pub fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
     alt((
         "-1".value(Phase::MinusOne),
         "i".value(Phase::Imag),
@@ -82,7 +86,8 @@ fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
 	.parse_next(input)
 }
 
-fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
+/// Parse a pattern
+pub fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
     separated(1.., pattern_tensor, (multispace0, '.', multispace0))
         .with_span()
         .map(|(v, span)| PatternR { patterns: v, span })
@@ -147,6 +152,7 @@ fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usi
     ).parse_next(input)
 }
 
+/// Parse a comment
 pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
     (
         multispace0,
@@ -156,6 +162,7 @@ pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
     Ok(())
 }
 
+/// Parse a command
 pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usize>>> {
     comment.parse_next(input)?;
     let gates = repeat(0.., terminated(gate, comment)).parse_next(input)?;

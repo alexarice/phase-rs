@@ -1,3 +1,8 @@
+//! Raw syntax definitions
+//!
+//! Raw syntax is used primarily for parsing and printed.
+//! It is not assumed to be typechecked/well-formed.
+
 use std::borrow::Cow;
 
 use pretty::RcDoc;
@@ -6,14 +11,14 @@ use super::{KetState, Phase};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TermR<S> {
-    pub terms: Vec<TensorR<S>>,
-    pub span: S,
+    pub(crate) terms: Vec<TensorR<S>>,
+    pub(crate) span: S,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TensorR<S> {
-    pub terms: Vec<AtomR<S>>,
-    pub span: S,
+    pub(crate) terms: Vec<AtomR<S>>,
+    pub(crate) span: S,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,14 +56,14 @@ pub enum AtomR<S> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PatternR<S> {
-    pub patterns: Vec<PatTensorR<S>>,
-    pub span: S,
+    pub(crate) patterns: Vec<PatTensorR<S>>,
+    pub(crate) span: S,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PatTensorR<S> {
-    pub patterns: Vec<PatAtomR<S>>,
-    pub span: S,
+    pub(crate) patterns: Vec<PatAtomR<S>>,
+    pub(crate) span: S,
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -1,17 +1,26 @@
-pub mod circuit_like;
+//! Syntax definitions for raw, typed, normal, and circuit-normal syntax.
+
+pub mod circuit_normal;
 pub mod normal;
 pub mod raw;
 pub mod typed;
 
+/// Holds the value of a ket pattern.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum KetState {
+    /// |0> pattern
     Zero,
+    /// |1> pattern
     One,
+    /// |+> pattern
     Plus,
+    /// |-> pattern
     Minus,
 }
 
 impl KetState {
+    /// Returns the complement of the state.
+    /// `state` and `state.compl()` from a basis of C^2
     pub fn compl(self) -> Self {
         match self {
             KetState::Zero => KetState::One,
@@ -21,6 +30,7 @@ impl KetState {
         }
     }
 
+    /// Returns the character needed to print this ket state.
     pub fn to_char(&self) -> char {
         match self {
             KetState::Zero => '0',
@@ -31,21 +41,28 @@ impl KetState {
     }
 }
 
+/// Represents a (global) phase operation.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Phase {
+    /// Specifies the phase by an float, which should equal the specified angle divided by pi
     Angle(f64),
+    /// -1 phase, equivalent to `Angle(1.0)`
     MinusOne,
+    /// i phase, equivalent to `Angle(0.5)`
     Imag,
+    /// -i phase, equivalent to `Angle(1.5)`
     MinusImag,
 }
 
 impl Phase {
+    /// Construct a new `Phase` from a float representing the desired angle divided by pi.
+    /// Uses special phase enum variants when possible.
     pub fn from_angle(f: f64) -> Self {
         if f == 0.5 {
             Phase::Imag
         } else if f == 1.0 {
             Phase::MinusOne
-        } else if f == 1.0 {
+        } else if f == 1.5 {
             Phase::MinusImag
         } else {
             Phase::Angle(f)

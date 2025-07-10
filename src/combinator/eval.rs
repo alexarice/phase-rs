@@ -1,3 +1,5 @@
+//! Simple term evaluation, expanding and simplifying terms.
+
 use super::syntax::{
     Phase,
     normal::{AtomN, PatternN, TermN},
@@ -5,6 +7,8 @@ use super::syntax::{
 };
 
 impl Phase {
+    /// Returns the angle specified by this phase, divided by pi.
+    /// e.g. if `phase.eval() == 1.0` then `phase` represents the angle `pi`
     pub fn eval(&self) -> f64 {
         match self {
             Phase::Angle(a) => *a,
@@ -15,9 +19,14 @@ impl Phase {
     }
 }
 
+/// Trait for objects that can built with compositions, tensors, or from an `AtomN`.
 pub trait Buildable {
+    /// Build a composition object from a sequence of subobjects and a given type.
+    /// Subobjects should be given in diagrammatic order, not function composition order.
     fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self;
+    /// Build a tensor product from a sequence of subobjects.
     fn tensor(iter: impl Iterator<Item = Self>) -> Self;
+    /// Build an object from an atom.
     fn atom(atom: AtomN) -> Self;
 }
 
@@ -60,6 +69,9 @@ impl Buildable for PatternN {
 }
 
 impl TermT {
+    /// Evaluate a term to a given `Buildable` type, expanding top level definitions
+    /// and evaluating inverse and sqrt macros.
+    /// In particular this can be used to generate a `TermN` from a `TermT`.
     pub fn eval<B: Buildable>(&self) -> B {
         self.eval_with_phase_mul(1.0)
     }
@@ -70,7 +82,7 @@ impl TermT {
                 let mut mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
                 if terms.len() == 1 {
                     mapped_terms.next().unwrap()
-                } else if phase_mul < 0.0 {
+                } else if phase_mul > 0.0 {
                     B::comp(mapped_terms, ty)
                 } else {
                     B::comp(mapped_terms.rev(), ty)
@@ -100,7 +112,9 @@ impl TermT {
 }
 
 impl PatternT {
-    pub fn eval(&self) -> PatternN {
+    /// Evaluate a term to a `PatternN`, expanding top level definitions
+    /// and evaluating inverse and sqrt macros.
+    fn eval(&self) -> PatternN {
         match self {
             PatternT::Comp { patterns } => {
                 if patterns.len() == 1 {
@@ -133,6 +147,8 @@ impl PatternT {
 }
 
 impl TermN {
+    /// Return a `TermT` which is the "quotation" of this normal-form term.
+    /// Realises that all normal-form terms are also terms.
     pub fn quote(&self) -> TermT {
         match self {
             TermN::Comp { terms, ty } => {
@@ -152,7 +168,7 @@ impl TermN {
         }
     }
 
-    pub fn squash_comp(mut self, acc: &mut Vec<TermN>) {
+    fn squash_comp(mut self, acc: &mut Vec<TermN>) {
         if let TermN::Comp { terms, .. } = self {
             for t in terms {
                 t.squash_comp(acc);
@@ -163,7 +179,7 @@ impl TermN {
         }
     }
 
-    pub fn squash_tensor(mut self, acc: &mut Vec<TermN>) {
+    fn squash_tensor(mut self, acc: &mut Vec<TermN>) {
         if let TermN::Tensor { terms, .. } = self {
             for t in terms {
                 t.squash_tensor(acc);
@@ -174,6 +190,7 @@ impl TermN {
         }
     }
 
+    /// Simplifies compositions, tensors, and identities in the given normal-form term.
     pub fn squash(&mut self) {
         match self {
             TermN::Comp { terms, .. } => {
@@ -200,7 +217,7 @@ impl TermN {
 }
 
 impl AtomN {
-    pub fn quote(&self) -> TermT {
+    fn quote(&self) -> TermT {
         match self {
             AtomN::Phase { angle } => TermT::Phase {
                 phase: Phase::from_angle(*angle),
@@ -212,7 +229,7 @@ impl AtomN {
         }
     }
 
-    pub fn squash(&mut self) {
+    fn squash(&mut self) {
         if let AtomN::IfLet { pattern, inner, .. } = self {
             pattern.squash();
             inner.squash();
@@ -221,6 +238,8 @@ impl AtomN {
 }
 
 impl PatternN {
+    /// Return a `PatternT` which is the "quotation" of this normal-form pattern.
+    /// Realises that all normal-form patterns are also patterns.
     pub fn quote(&self) -> PatternT {
         match self {
             PatternN::Comp { patterns, ty } => {
@@ -242,7 +261,7 @@ impl PatternN {
         }
     }
 
-    pub fn squash_comp(mut self, acc: &mut Vec<PatternN>) {
+    fn squash_comp(mut self, acc: &mut Vec<PatternN>) {
         if let PatternN::Comp { patterns, .. } = self {
             for p in patterns {
                 p.squash_comp(acc);
@@ -253,7 +272,7 @@ impl PatternN {
         }
     }
 
-    pub fn squash_tensor(mut self, acc: &mut Vec<PatternN>) {
+    fn squash_tensor(mut self, acc: &mut Vec<PatternN>) {
         if let PatternN::Tensor { patterns, .. } = self {
             for p in patterns {
                 p.squash_tensor(acc);
@@ -264,6 +283,7 @@ impl PatternN {
         }
     }
 
+    /// Simplifies compositions, tensors, and identities in the given normal-form pattern.
     pub fn squash(&mut self) {
         match self {
             PatternN::Comp { patterns, .. } => {

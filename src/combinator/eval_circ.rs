@@ -1,9 +1,12 @@
+//! Evaluation to circuit normal form, for extracting quantum circuits.
+
 use super::syntax::{
-    circuit_like::{ClauseC, PatternC, TermC},
+    circuit_normal::{ClauseC, PatternC, TermC},
     typed::{PatternT, TermT},
 };
 
 impl TermT {
+    /// Returns a `TermC` representing the "circuit-normal-form" of the term.
     pub fn eval_circ(&self) -> TermC {
         let mut clauses = vec![];
         let size = self.get_type().0;
@@ -14,7 +17,7 @@ impl TermT {
             ty: self.get_type(),
         }
     }
-    pub fn eval_circ_clause(
+    fn eval_circ_clause(
         &self,
         pattern: &PatternC,
         inj: &[usize],
@@ -80,7 +83,7 @@ impl TermT {
 }
 
 impl PatternT {
-    pub fn eval_circ(
+    fn eval_circ(
         &self,
         pattern: &mut PatternC,
         inj: &mut Vec<usize>,
@@ -110,7 +113,7 @@ impl PatternT {
                 }
             }
             PatternT::Unitary(term_t) => {
-                term_t.eval_circ_clause(&PatternC::id(pattern.parts.len()), inj, -1.0, clauses);
+                term_t.eval_circ_clause(pattern, inj, -1.0, clauses);
             }
         }
     }
