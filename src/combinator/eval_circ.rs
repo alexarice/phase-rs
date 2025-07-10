@@ -25,7 +25,7 @@ impl TermT {
         clauses: &mut Vec<ClauseC>,
     ) {
         match self {
-            TermT::Comp { terms, .. } => {
+            TermT::Comp(terms) => {
                 if phase_mul < 0.0 {
                     for t in terms.iter().rev() {
                         t.eval_circ_clause(pattern, inj, phase_mul, clauses);
@@ -36,7 +36,7 @@ impl TermT {
                     }
                 }
             }
-            TermT::Tensor { terms } => {
+            TermT::Tensor(terms) => {
                 let mut start = 0;
                 for t in terms {
                     let size = t.get_type().0;
@@ -45,10 +45,10 @@ impl TermT {
                     start = end;
                 }
             }
-            TermT::Id { .. } => {
+            TermT::Id(_) => {
                 // Intentionally blank
             }
-            TermT::Phase { phase } => {
+            TermT::Phase(phase) => {
                 clauses.push(ClauseC {
                     pattern: pattern.clone(),
                     phase: phase_mul * phase.eval(),
@@ -72,10 +72,10 @@ impl TermT {
             TermT::Gate { def, .. } => {
                 def.eval_circ_clause(pattern, inj, phase_mul, clauses);
             }
-            TermT::Inverse { inner } => {
+            TermT::Inverse(inner) => {
                 inner.eval_circ_clause(pattern, inj, -phase_mul, clauses);
             }
-            TermT::Sqrt { inner } => {
+            TermT::Sqrt(inner) => {
                 inner.eval_circ_clause(pattern, inj, phase_mul / 2.0, clauses);
             }
         }
@@ -85,12 +85,12 @@ impl TermT {
 impl PatternT {
     fn eval_circ(&self, pattern: &mut PatternC, inj: &mut Vec<usize>, clauses: &mut Vec<ClauseC>) {
         match self {
-            PatternT::Comp { patterns } => {
+            PatternT::Comp(patterns) => {
                 for p in patterns {
                     p.eval_circ(pattern, inj, clauses);
                 }
             }
-            PatternT::Tensor { patterns } => {
+            PatternT::Tensor(patterns) => {
                 let mut stack: Vec<Vec<usize>> = Vec::new();
                 for p in patterns.iter().rev() {
                     let size = p.get_type().0;
@@ -102,12 +102,12 @@ impl PatternT {
                     inj.extend(i);
                 }
             }
-            PatternT::Ket { states } => {
+            PatternT::Ket(states) => {
                 for (state, i) in states.iter().zip(inj.drain(0..states.len())) {
                     pattern.parts[i] = Some(*state)
                 }
             }
-            PatternT::Unitary { inner } => {
+            PatternT::Unitary(inner) => {
                 inner.eval_circ_clause(pattern, inj, -1.0, clauses);
             }
         }

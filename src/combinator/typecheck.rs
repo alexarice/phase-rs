@@ -15,29 +15,51 @@ use super::syntax::{
 pub enum TypeCheckError<S> {
     /// Error for mismatching type between terms in a composition.
     TypeMismatch {
+        /// Term 1
         t1: TensorR<S>,
+        /// Type of term 1
         ty1: TermType,
+        /// Term 2
         t2: TensorR<S>,
+        /// Type of term 2
         ty2: TermType,
     },
     /// Error for mismatching type between a term and pattern in an "if let" statement.
     IfTypeMismatch {
+        /// Pattern
         p: PatternR<S>,
+        /// Type of pattern
         pty: PatternType,
+        /// Body term
         t: AtomR<S>,
+        /// Type of body term
         tty: TermType,
     },
     /// Error for mismatching type between composed patterns.
     PatternTypeMismatch {
+        /// Pattern 1
         p1: PatTensorR<S>,
+        /// Type of pattern 1
         ty1: PatternType,
+        /// Pattern 2
         p2: PatTensorR<S>,
+        /// Type of pattern 2
         ty2: PatternType,
     },
     /// Error for an unknown top-level symbol.
-    UnknownSymbol { name: String, span: S },
+    UnknownSymbol {
+        /// The unknown symbol encountered
+        name: String,
+        /// Span of symbol
+        span: S,
+    },
     /// Error for when a sqrt operation is applied to a term with compositions.
-    TermNotRootable { tm: TermR<S>, span_of_root: S },
+    TermNotRootable {
+        /// Term which contains compositions
+        tm: TermR<S>,
+        /// Span of sqrt term causing error
+        span_of_root: S,
+    },
 }
 
 /// Typing enviroment, holding definitions of top level symbols.
@@ -45,6 +67,8 @@ pub enum TypeCheckError<S> {
 pub struct Env(pub(crate) HashMap<String, TermT>);
 
 impl<S: Clone> TermR<S> {
+    /// Typecheck a raw term in given environment
+    /// If `check_sqrt` is not `None`, then checks that the term is "composition free"
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         if let Some(span) = check_sqrt {
             if self.inner.terms.len() != 1 {
@@ -73,31 +97,28 @@ impl<S: Clone> TermR<S> {
             raw = r;
             v.push(term);
         }
-        Ok(TermT::Comp { terms: v, ty: ty1 })
+        Ok(TermT::Comp(v))
     }
 }
 
 impl<S: Clone> TensorR<S> {
-    pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
-        Ok(TermT::Tensor {
-            terms: self
-                .inner
+    fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
+        Ok(TermT::Tensor(
+            self.inner
                 .terms
                 .iter()
                 .map(|t| t.check(env, check_sqrt))
                 .collect::<Result<_, _>>()?,
-        })
+        ))
     }
 }
 
 impl<S: Clone> AtomR<S> {
-    pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
+    fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         match &self.inner {
-            AtomRInner::Brackets { term, .. } => term.check(env, check_sqrt),
-            AtomRInner::Id { qubits, .. } => Ok(TermT::Id {
-                ty: TermType(*qubits),
-            }),
-            AtomRInner::Phase { phase, .. } => Ok(TermT::Phase { phase: *phase }),
+            AtomRInner::Brackets(term) => term.check(env, check_sqrt),
+            AtomRInner::Id(qubits) => Ok(TermT::Id(TermType(*qubits))),
+            AtomRInner::Phase(phase) => Ok(TermT::Phase(*phase)),
             AtomRInner::IfLet { pattern, inner, .. } => {
                 let p = pattern.check(env)?;
                 let t = inner.check(env, check_sqrt)?;
@@ -117,7 +138,7 @@ impl<S: Clone> AtomR<S> {
                     })
                 }
             }
-            AtomRInner::Gate { name } => {
+            AtomRInner::Gate(name) => {
                 if let Some(def) = env.0.get(name) {
                     Ok(TermT::Gate {
                         name: name.clone(),
@@ -130,28 +151,25 @@ impl<S: Clone> AtomR<S> {
                     })
                 }
             }
-            AtomRInner::Inverse { inner, .. } => {
+            AtomRInner::Inverse(inner) => {
                 let inner_t = inner.check(env, check_sqrt)?;
-                Ok(TermT::Inverse {
-                    inner: Box::new(inner_t),
-                })
+                Ok(TermT::Inverse(Box::new(inner_t)))
             }
-            AtomRInner::Sqrt { inner } => {
+            AtomRInner::Sqrt(inner) => {
                 let inner_t = if check_sqrt.is_some() {
                     inner.check(env, None)?
                 } else {
                     inner.check(env, Some(&self.span))?
                 };
 
-                Ok(TermT::Sqrt {
-                    inner: Box::new(inner_t),
-                })
+                Ok(TermT::Sqrt(Box::new(inner_t)))
             }
         }
     }
 }
 
 impl<S: Clone> PatternR<S> {
+    /// Typecheck a raw pattern in given environment
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         let mut pattern_iter = self.inner.patterns.iter();
         let mut raw = pattern_iter.next().unwrap();
@@ -173,33 +191,30 @@ impl<S: Clone> PatternR<S> {
             ty1 = ty2;
             v.push(pattern);
         }
-        Ok(PatternT::Comp { patterns: v })
+        Ok(PatternT::Comp(v))
     }
 }
 
 impl<S: Clone> PatTensorR<S> {
-    pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
-        Ok(PatternT::Tensor {
-            patterns: self
-                .inner
+    fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
+        Ok(PatternT::Tensor(
+            self.inner
                 .patterns
                 .iter()
                 .map(|p| p.check(env))
                 .collect::<Result<_, _>>()?,
-        })
+        ))
     }
 }
 
 impl<S: Clone> PatAtomR<S> {
-    pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
+    fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         match &self.inner {
-            PatAtomRInner::Brackets { pattern, .. } => pattern.check(env),
-            PatAtomRInner::Ket { states, .. } => Ok(PatternT::Ket {
-                states: states.clone(),
-            }),
-            PatAtomRInner::Unitary { inner } => Ok(PatternT::Unitary {
-                inner: Box::new(inner.check(env, None)?),
-            }),
+            PatAtomRInner::Brackets(pattern) => pattern.check(env),
+            PatAtomRInner::Ket(states) => Ok(PatternT::Ket(states.clone())),
+            PatAtomRInner::Unitary(inner) => {
+                Ok(PatternT::Unitary(Box::new(inner.check(env, None)?)))
+            }
         }
     }
 }
@@ -207,7 +222,7 @@ impl<S: Clone> PatAtomR<S> {
 impl TermT {
     /// Convert to a raw term.
     pub fn to_raw(&self) -> TermR<()> {
-        let terms = if let TermT::Comp { terms, .. } = self {
+        let terms = if let TermT::Comp(terms) = self {
             terms.iter().map(|t| t.to_raw_tensor()).collect()
         } else {
             vec![self.to_raw_tensor()]
@@ -216,7 +231,7 @@ impl TermT {
     }
 
     fn to_raw_tensor(&self) -> TensorR<()> {
-        let terms = if let TermT::Tensor { terms } = self {
+        let terms = if let TermT::Tensor(terms) = self {
             terms.iter().map(|t| t.to_raw_atom()).collect()
         } else {
             vec![self.to_raw_atom()]
@@ -226,22 +241,16 @@ impl TermT {
 
     fn to_raw_atom(&self) -> AtomR<()> {
         match self {
-            TermT::Id { ty } => AtomRInner::Id { qubits: ty.0 },
-            TermT::Phase { phase } => AtomRInner::Phase { phase: *phase },
+            TermT::Id(ty) => AtomRInner::Id(ty.0),
+            TermT::Phase(phase) => AtomRInner::Phase(*phase),
             TermT::IfLet { pattern, inner } => AtomRInner::IfLet {
                 pattern: pattern.to_raw(),
                 inner: Box::new(inner.to_raw_atom()),
             },
-            TermT::Gate { name, .. } => AtomRInner::Gate {
-                name: name.to_owned(),
-            },
-            TermT::Inverse { inner } => AtomRInner::Inverse {
-                inner: Box::new(inner.to_raw_atom()),
-            },
-            TermT::Sqrt { inner } => AtomRInner::Sqrt {
-                inner: Box::new(inner.to_raw_atom()),
-            },
-            t => AtomRInner::Brackets { term: t.to_raw() },
+            TermT::Gate { name, .. } => AtomRInner::Gate(name.to_owned()),
+            TermT::Inverse(inner) => AtomRInner::Inverse(Box::new(inner.to_raw_atom())),
+            TermT::Sqrt(inner) => AtomRInner::Sqrt(Box::new(inner.to_raw_atom())),
+            t => AtomRInner::Brackets(t.to_raw()),
         }
         .into()
     }
@@ -250,7 +259,7 @@ impl TermT {
 impl PatternT {
     /// Convert to a raw pattern.
     pub fn to_raw(&self) -> PatternR<()> {
-        let patterns = if let PatternT::Comp { patterns } = self {
+        let patterns = if let PatternT::Comp(patterns) = self {
             patterns.iter().map(|t| t.to_raw_tensor()).collect()
         } else {
             vec![self.to_raw_tensor()]
@@ -259,7 +268,7 @@ impl PatternT {
     }
 
     fn to_raw_tensor(&self) -> PatTensorR<()> {
-        let patterns = if let PatternT::Tensor { patterns } = self {
+        let patterns = if let PatternT::Tensor(patterns) = self {
             patterns.iter().map(|t| t.to_raw_atom()).collect()
         } else {
             vec![self.to_raw_atom()]
@@ -269,15 +278,9 @@ impl PatternT {
 
     fn to_raw_atom(&self) -> PatAtomR<()> {
         match self {
-            PatternT::Ket { states } => PatAtomRInner::Ket {
-                states: states.clone(),
-            },
-            PatternT::Unitary { inner } => PatAtomRInner::Unitary {
-                inner: Box::new(inner.to_raw()),
-            },
-            p => PatAtomRInner::Brackets {
-                pattern: p.to_raw(),
-            },
+            PatternT::Ket(states) => PatAtomRInner::Ket(states.clone()),
+            PatternT::Unitary(inner) => PatAtomRInner::Unitary(Box::new(inner.to_raw())),
+            p => PatAtomRInner::Brackets(p.to_raw()),
         }
         .into()
     }

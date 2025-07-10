@@ -62,15 +62,15 @@ fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
 	    delimited(("(", multispace0),
 		      cut_err(tm),
 		      cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
-		.map(|term| AtomRInner::Brackets { term }),
+		.map(AtomRInner::Brackets),
 	    preceded(("sqrt", multispace0), cut_err(atom))
-		.map(|inner| AtomRInner::Sqrt { inner: Box::new(inner) }),
+		.map(|inner| AtomRInner::Sqrt(Box::new(inner))),
 	    preceded("id", opt(dec_uint))
-		.map(|qubits| AtomRInner::Id { qubits: qubits.unwrap_or(1) }),
+		.map(|qubits| AtomRInner::Id(qubits.unwrap_or(1))),
 	    preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
 	    .map(|(pattern, inner)| AtomRInner::IfLet{ pattern, inner: Box::new(inner) }),
-	    phase.map(|phase| AtomRInner::Phase { phase }),
-	    identifier.map(|name| AtomRInner::Gate { name })
+	    phase.map(AtomRInner::Phase),
+	    identifier.map(AtomRInner::Gate)
 	)).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
 	    .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
 	    .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
@@ -87,7 +87,7 @@ fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
 	.with_span()
 	.map(|((inner, invert), span)| {
 	    if invert.is_some() {
-		AtomRInner::Inverse { inner: Box::new(Spanned { inner, span }) }
+		AtomRInner::Inverse ( Box::new(Spanned { inner, span }) )
 	    } else {
 		inner
 	    }}))
@@ -125,16 +125,15 @@ fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomRInner<Range<usize
         ),
         ">",
     )
-    .map(|states| PatAtomRInner::Ket { states })
+    .map(PatAtomRInner::Ket)
     .parse_next(input)
 }
 
 fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
     parse_spanned(alt((
-        delimited(("(", multispace0), pattern, (multispace0, ")"))
-            .map(|pattern| PatAtomRInner::Brackets { pattern }),
+        delimited(("(", multispace0), pattern, (multispace0, ")")).map(PatAtomRInner::Brackets),
         ket,
-        tm.map(|x| PatAtomRInner::Unitary { inner: Box::new(x) }),
+        tm.map(|x| PatAtomRInner::Unitary(Box::new(x))),
     )))
     .parse_next(input)
 }

@@ -35,12 +35,9 @@ impl TermC {
     /// Realises that all circuit-normal-form terms are also terms.
     pub fn quote(&self) -> TermT {
         match self.clauses.len() {
-            0 => TermT::Id { ty: self.ty },
+            0 => TermT::Id(self.ty),
             1 => self.clauses[0].quote(),
-            _ => TermT::Comp {
-                terms: self.clauses.iter().map(ClauseC::quote).collect(),
-                ty: self.ty,
-            },
+            _ => TermT::Comp(self.clauses.iter().map(ClauseC::quote).collect()),
         }
     }
 }
@@ -48,18 +45,9 @@ impl TermC {
 impl ClauseC {
     pub(crate) fn quote(&self) -> TermT {
         let id_qubits = self.pattern.id_qubits();
-        let mut inner = TermT::Phase {
-            phase: Phase::Angle(self.phase),
-        };
+        let mut inner = TermT::Phase(Phase::Angle(self.phase));
         if id_qubits != 0 {
-            inner = TermT::Tensor {
-                terms: vec![
-                    inner,
-                    TermT::Id {
-                        ty: TermType(id_qubits),
-                    },
-                ],
-            }
+            inner = TermT::Tensor(vec![inner, TermT::Id(TermType(id_qubits))])
         }
 
         TermT::IfLet {
@@ -78,12 +66,8 @@ impl ClauseC {
 
 fn state_to_pattern(s: Option<KetState>) -> PatternT {
     s.map_or(
-        PatternT::Unitary {
-            inner: Box::new(TermT::Id { ty: TermType(1) }),
-        },
-        |state| PatternT::Ket {
-            states: vec![state],
-        },
+        PatternT::Unitary(Box::new(TermT::Id(TermType(1)))),
+        |state| PatternT::Ket(vec![state]),
     )
 }
 
@@ -92,9 +76,7 @@ impl PatternC {
         if self.parts.len() == 1 {
             state_to_pattern(self.parts[0])
         } else {
-            PatternT::Tensor {
-                patterns: self.parts.iter().cloned().map(state_to_pattern).collect(),
-            }
+            PatternT::Tensor(self.parts.iter().cloned().map(state_to_pattern).collect())
         }
     }
 

@@ -15,7 +15,9 @@ use crate::combinator::syntax::ToDoc;
 /// The span is ignored when printing.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Spanned<S, T> {
+    /// Wrapped data
     pub inner: T,
+    /// Text span
     pub span: S,
 }
 
@@ -73,28 +75,25 @@ pub type AtomR<S> = Spanned<S, AtomRInner<S>>;
 /// Represents a term other than a tensor or composition (or a composition/tensor in brackets)
 #[derive(Clone, Debug, PartialEq)]
 pub enum AtomRInner<S> {
-    Brackets {
-        term: TermR<S>,
-    },
-    Id {
-        qubits: usize,
-    },
-    Phase {
-        phase: Phase,
-    },
+    /// A term enclosed in parentheses
+    Brackets(TermR<S>),
+    /// An identity term "id(n)"
+    Id(usize),
+    /// A (global) phase operator, e.g. "-1" or "ph(0.1pi)"
+    Phase(Phase),
+    /// An "if let" statement, "if let pattern then inner"
     IfLet {
+        /// Pattern to match on in "if let"
         pattern: PatternR<S>,
+        /// Body of the "if let"
         inner: Box<AtomR<S>>,
     },
-    Gate {
-        name: String,
-    },
-    Inverse {
-        inner: Box<AtomR<S>>,
-    },
-    Sqrt {
-        inner: Box<AtomR<S>>,
-    },
+    /// Top level symbol, a named gate
+    Gate(String),
+    /// Inverse of a term "t ^ -1"
+    Inverse(Box<AtomR<S>>),
+    /// Square root of a term "sqrt(t)"
+    Sqrt(Box<AtomR<S>>),
 }
 
 /// Raw syntax pattern with text span.
@@ -127,9 +126,12 @@ pub type PatAtomR<S> = Spanned<S, PatAtomRInner<S>>;
 /// Represents a pattern other than a tensor or composition (or a composition/tensor in brackets)
 #[derive(Clone, Debug, PartialEq)]
 pub enum PatAtomRInner<S> {
-    Brackets { pattern: PatternR<S> },
-    Ket { states: Vec<KetState> },
-    Unitary { inner: Box<TermR<S>> },
+    /// A pattern enclosed in parentheses
+    Brackets(PatternR<S>),
+    /// A sequence of ket states "|xyz>", equivalent to "|x> x |y> x |z>"
+    Ket(Vec<KetState>),
+    /// A unitary pattern
+    Unitary(Box<TermR<S>>),
 }
 
 impl<S> ToDoc for TermRInner<S> {
@@ -155,17 +157,17 @@ impl<S> ToDoc for TensorRInner<S> {
 impl<S> ToDoc for AtomRInner<S> {
     fn to_doc(&self) -> RcDoc {
         match self {
-            AtomRInner::Brackets { term, .. } => RcDoc::text("(")
+            AtomRInner::Brackets(term) => RcDoc::text("(")
                 .append(RcDoc::line().append(term.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            AtomRInner::Id { qubits, .. } => RcDoc::text(if *qubits == 1 {
+            AtomRInner::Id(qubits) => RcDoc::text(if *qubits == 1 {
                 Cow::Borrowed("id")
             } else {
                 Cow::Owned(format!("id{qubits}"))
             }),
-            AtomRInner::Phase { phase, .. } => phase.to_doc(),
+            AtomRInner::Phase(phase) => phase.to_doc(),
             AtomRInner::IfLet { pattern, inner, .. } => RcDoc::text("if let")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
@@ -173,9 +175,9 @@ impl<S> ToDoc for AtomRInner<S> {
                 .group()
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .group(),
-            AtomRInner::Gate { name, .. } => RcDoc::text(name),
-            AtomRInner::Inverse { inner, .. } => inner.to_doc().append(" ^ -1"),
-            AtomRInner::Sqrt { inner, .. } => RcDoc::text("sqrt(")
+            AtomRInner::Gate(name) => RcDoc::text(name),
+            AtomRInner::Inverse(inner) => inner.to_doc().append(" ^ -1"),
+            AtomRInner::Sqrt(inner) => RcDoc::text("sqrt(")
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
@@ -207,16 +209,16 @@ impl<S> ToDoc for PatTensorRInner<S> {
 impl<S> ToDoc for PatAtomRInner<S> {
     fn to_doc(&self) -> RcDoc {
         match self {
-            PatAtomRInner::Brackets { pattern, .. } => RcDoc::text("(")
+            PatAtomRInner::Brackets(pattern) => RcDoc::text("(")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            PatAtomRInner::Ket { states, .. } => RcDoc::text(format!(
+            PatAtomRInner::Ket(states) => RcDoc::text(format!(
                 "|{}>",
                 states.iter().map(KetState::to_char).collect::<String>()
             )),
-            PatAtomRInner::Unitary { inner } => inner.to_doc(),
+            PatAtomRInner::Unitary(inner) => inner.to_doc(),
         }
     }
 }

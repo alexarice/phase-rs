@@ -18,4 +18,6 @@
 //! cargo run -- --help
 //! ```
 
+#![warn(missing_docs)]
+
 pub mod combinator;

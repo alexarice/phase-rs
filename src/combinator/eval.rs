@@ -32,35 +32,25 @@ pub trait Buildable {
 
 impl Buildable for TermN {
     fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self {
-        TermN::Comp {
-            terms: iter.collect(),
-            ty: *ty,
-        }
+        TermN::Comp(iter.collect(), *ty)
     }
 
     fn tensor(iter: impl Iterator<Item = Self>) -> Self {
-        TermN::Tensor {
-            terms: iter.collect(),
-        }
+        TermN::Tensor(iter.collect())
     }
 
     fn atom(atom: AtomN) -> Self {
-        TermN::Atom { atom }
+        TermN::Atom(atom)
     }
 }
 
 impl Buildable for PatternN {
     fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self {
-        PatternN::Comp {
-            patterns: iter.rev().collect(),
-            ty: PatternType(ty.0, ty.0),
-        }
+        PatternN::Comp(iter.rev().collect(), PatternType(ty.0, ty.0))
     }
 
     fn tensor(iter: impl Iterator<Item = Self>) -> Self {
-        PatternN::Tensor {
-            patterns: iter.collect(),
-        }
+        PatternN::Tensor(iter.collect())
     }
 
     fn atom(atom: AtomN) -> Self {
@@ -78,35 +68,33 @@ impl TermT {
 
     fn eval_with_phase_mul<B: Buildable>(&self, phase_mul: f64) -> B {
         match self {
-            TermT::Comp { terms, ty } => {
+            TermT::Comp(terms) => {
                 let mut mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
                 if terms.len() == 1 {
                     mapped_terms.next().unwrap()
                 } else if phase_mul > 0.0 {
-                    B::comp(mapped_terms, ty)
+                    B::comp(mapped_terms, &terms.first().unwrap().get_type())
                 } else {
-                    B::comp(mapped_terms.rev(), ty)
+                    B::comp(mapped_terms.rev(), &terms.first().unwrap().get_type())
                 }
             }
-            TermT::Tensor { terms } => {
+            TermT::Tensor(terms) => {
                 if terms.len() == 1 {
                     terms[0].eval_with_phase_mul(phase_mul)
                 } else {
                     B::tensor(terms.iter().map(|t| t.eval_with_phase_mul(phase_mul)))
                 }
             }
-            TermT::Id { ty } => B::comp(std::iter::empty(), ty),
-            TermT::Phase { phase } => B::atom(AtomN::Phase {
-                angle: phase_mul * phase.eval(),
-            }),
-            TermT::IfLet { pattern, inner } => B::atom(AtomN::IfLet {
-                pattern: pattern.eval(),
-                inner: Box::new(inner.eval_with_phase_mul(phase_mul)),
-                ty: pattern.get_type().0,
-            }),
+            TermT::Id(ty) => B::comp(std::iter::empty(), ty),
+            TermT::Phase(phase) => B::atom(AtomN::Phase(phase_mul * phase.eval())),
+            TermT::IfLet { pattern, inner } => B::atom(AtomN::IfLet(
+                pattern.eval(),
+                Box::new(inner.eval_with_phase_mul(phase_mul)),
+                TermType(pattern.get_type().0),
+            )),
             TermT::Gate { def, .. } => def.eval_with_phase_mul(phase_mul),
-            TermT::Inverse { inner } => inner.eval_with_phase_mul(-phase_mul),
-            TermT::Sqrt { inner } => inner.eval_with_phase_mul(phase_mul / 2.0),
+            TermT::Inverse(inner) => inner.eval_with_phase_mul(-phase_mul),
+            TermT::Sqrt(inner) => inner.eval_with_phase_mul(phase_mul / 2.0),
         }
     }
 }
@@ -116,32 +104,27 @@ impl PatternT {
     /// and evaluating inverse and sqrt macros.
     fn eval(&self) -> PatternN {
         match self {
-            PatternT::Comp { patterns } => {
+            PatternT::Comp(patterns) => {
                 if patterns.len() == 1 {
                     patterns[0].eval()
                 } else {
-                    PatternN::Comp {
-                        patterns: patterns.iter().map(PatternT::eval).collect(),
-                        ty: self.get_type(),
-                    }
+                    PatternN::Comp(
+                        patterns.iter().map(PatternT::eval).collect(),
+                        self.get_type(),
+                    )
                 }
             }
-            PatternT::Tensor { patterns } => {
+            PatternT::Tensor(patterns) => {
                 if patterns.len() == 1 {
                     patterns[0].eval()
                 } else {
-                    PatternN::Tensor {
-                        patterns: patterns.iter().map(PatternT::eval).collect(),
-                    }
+                    PatternN::Tensor(patterns.iter().map(PatternT::eval).collect())
                 }
             }
-            PatternT::Ket { states } => PatternN::Tensor {
-                patterns: states
-                    .iter()
-                    .map(|&state| PatternN::Ket { state })
-                    .collect(),
-            },
-            PatternT::Unitary { inner } => inner.eval(),
+            PatternT::Ket(states) => {
+                PatternN::Tensor(states.iter().map(|&state| PatternN::Ket(state)).collect())
+            }
+            PatternT::Unitary(inner) => inner.eval(),
         }
     }
 }
@@ -151,25 +134,20 @@ impl TermN {
     /// Realises that all normal-form terms are also terms.
     pub fn quote(&self) -> TermT {
         match self {
-            TermN::Comp { terms, ty } => {
+            TermN::Comp(terms, ty) => {
                 if terms.is_empty() {
-                    TermT::Id { ty: *ty }
+                    TermT::Id(*ty)
                 } else {
-                    TermT::Comp {
-                        terms: terms.iter().map(TermN::quote).collect(),
-                        ty: *ty,
-                    }
+                    TermT::Comp(terms.iter().map(TermN::quote).collect())
                 }
             }
-            TermN::Tensor { terms } => TermT::Tensor {
-                terms: terms.iter().map(TermN::quote).collect(),
-            },
-            TermN::Atom { atom } => atom.quote(),
+            TermN::Tensor(terms) => TermT::Tensor(terms.iter().map(TermN::quote).collect()),
+            TermN::Atom(atom) => atom.quote(),
         }
     }
 
     fn squash_comp(mut self, acc: &mut Vec<TermN>) {
-        if let TermN::Comp { terms, .. } = self {
+        if let TermN::Comp(terms, _) = self {
             for t in terms {
                 t.squash_comp(acc);
             }
@@ -180,7 +158,7 @@ impl TermN {
     }
 
     fn squash_tensor(mut self, acc: &mut Vec<TermN>) {
-        if let TermN::Tensor { terms, .. } = self {
+        if let TermN::Tensor(terms) = self {
             for t in terms {
                 t.squash_tensor(acc);
             }
@@ -193,7 +171,7 @@ impl TermN {
     /// Simplifies compositions, tensors, and identities in the given normal-form term.
     pub fn squash(&mut self) {
         match self {
-            TermN::Comp { terms, .. } => {
+            TermN::Comp(terms, _) => {
                 let old_terms = std::mem::take(terms);
                 for t in old_terms {
                     t.squash_comp(terms);
@@ -202,7 +180,7 @@ impl TermN {
                     *self = terms.pop().unwrap();
                 }
             }
-            TermN::Tensor { terms } => {
+            TermN::Tensor(terms) => {
                 let old_terms = std::mem::take(terms);
                 for t in old_terms {
                     t.squash_tensor(terms);
@@ -211,7 +189,7 @@ impl TermN {
                     *self = terms.pop().unwrap();
                 }
             }
-            TermN::Atom { atom } => atom.squash(),
+            TermN::Atom(atom) => atom.squash(),
         }
     }
 }
@@ -219,10 +197,8 @@ impl TermN {
 impl AtomN {
     fn quote(&self) -> TermT {
         match self {
-            AtomN::Phase { angle } => TermT::Phase {
-                phase: Phase::from_angle(*angle),
-            },
-            AtomN::IfLet { pattern, inner, .. } => TermT::IfLet {
+            AtomN::Phase(angle) => TermT::Phase(Phase::from_angle(*angle)),
+            AtomN::IfLet(pattern, inner, _) => TermT::IfLet {
                 pattern: pattern.quote(),
                 inner: Box::new(inner.quote()),
             },
@@ -230,7 +206,7 @@ impl AtomN {
     }
 
     fn squash(&mut self) {
-        if let AtomN::IfLet { pattern, inner, .. } = self {
+        if let AtomN::IfLet(pattern, inner, _) = self {
             pattern.squash();
             inner.squash();
         }
@@ -242,31 +218,23 @@ impl PatternN {
     /// Realises that all normal-form patterns are also patterns.
     pub fn quote(&self) -> PatternT {
         match self {
-            PatternN::Comp { patterns, ty } => {
+            PatternN::Comp(patterns, ty) => {
                 if patterns.is_empty() {
-                    PatternT::Unitary {
-                        inner: Box::new(TermT::Id { ty: TermType(ty.0) }),
-                    }
+                    PatternT::Unitary(Box::new(TermT::Id(TermType(ty.0))))
                 } else {
-                    PatternT::Comp {
-                        patterns: patterns.iter().map(PatternN::quote).collect(),
-                    }
+                    PatternT::Comp(patterns.iter().map(PatternN::quote).collect())
                 }
             }
-            PatternN::Tensor { patterns } => PatternT::Tensor {
-                patterns: patterns.iter().map(PatternN::quote).collect(),
-            },
-            PatternN::Ket { state } => PatternT::Ket {
-                states: vec![*state],
-            },
-            PatternN::Unitary(atom_n) => PatternT::Unitary {
-                inner: Box::new(atom_n.quote()),
-            },
+            PatternN::Tensor(patterns) => {
+                PatternT::Tensor(patterns.iter().map(PatternN::quote).collect())
+            }
+            PatternN::Ket(state) => PatternT::Ket(vec![*state]),
+            PatternN::Unitary(inner) => PatternT::Unitary(Box::new(inner.quote())),
         }
     }
 
     fn squash_comp(mut self, acc: &mut Vec<PatternN>) {
-        if let PatternN::Comp { patterns, .. } = self {
+        if let PatternN::Comp(patterns, _) = self {
             for p in patterns {
                 p.squash_comp(acc);
             }
@@ -277,7 +245,7 @@ impl PatternN {
     }
 
     fn squash_tensor(mut self, acc: &mut Vec<PatternN>) {
-        if let PatternN::Tensor { patterns, .. } = self {
+        if let PatternN::Tensor(patterns) = self {
             for p in patterns {
                 p.squash_tensor(acc);
             }
@@ -290,7 +258,7 @@ impl PatternN {
     /// Simplifies compositions, tensors, and identities in the given normal-form pattern.
     pub fn squash(&mut self) {
         match self {
-            PatternN::Comp { patterns, .. } => {
+            PatternN::Comp(patterns, _) => {
                 let old_patterns = std::mem::take(patterns);
                 for p in old_patterns {
                     p.squash_comp(patterns);
@@ -299,7 +267,7 @@ impl PatternN {
                     *self = patterns.pop().unwrap();
                 }
             }
-            PatternN::Tensor { patterns } => {
+            PatternN::Tensor(patterns) => {
                 let old_patterns = std::mem::take(patterns);
                 for p in old_patterns {
                     p.squash_tensor(patterns);
@@ -308,8 +276,8 @@ impl PatternN {
                     *self = patterns.pop().unwrap();
                 }
             }
-            PatternN::Ket { .. } => {}
-            PatternN::Unitary(atom_n) => atom_n.squash(),
+            PatternN::Ket(_) => {}
+            PatternN::Unitary(inner) => inner.squash(),
         }
     }
 }
