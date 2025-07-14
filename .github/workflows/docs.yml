@@ -2,11 +2,10 @@ name: docs
 on:
   push:
    branches:
-   - master
+   - main
 
 jobs:
   rustdoc:
-    if: github.repository == 'rust-lang/rust-analyzer'
     runs-on: ubuntu-latest
 
     steps:
