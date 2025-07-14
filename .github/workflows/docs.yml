@@ -16,11 +16,14 @@ jobs:
       run: rustup update --no-self-update stable
 
     - name: Build Documentation
-      run: cargo doc --all --no-deps
+      run: cargo doc --all
+
+    - name: Add redirect
+      run: echo '<meta http-equiv="refresh" content="0;url=phase_rs/index.html">' > target/doc/index.html
 
     - name: Deploy Docs
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_branch: gh-pages
-        publish_dir: ./target/doc/phase_rs
+        publish_dir: ./target/doc
