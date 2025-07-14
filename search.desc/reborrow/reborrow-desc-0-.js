@@ -1,0 +1,1 @@
+searchState.loadedDescShard("reborrow", 0, "Emulate reborrowing for user types.\nThis trait is similar to [<code>std::convert::AsMut</code>], but works …\nThis trait is similar to [<code>std::convert::AsRef</code>], but works …\nConsume a mutable reference to produce an immutable one.\nImmutable reborrowing.\nMutable reborrowing.")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["tridiag_in_place","tridiag_in_place_scratch"],"struct":["TridiagParams"]};

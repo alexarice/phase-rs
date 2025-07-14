@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["default"],"macro":["col","mat","row","unzip","zip"],"trait":["IntoConst","Reborrow","ReborrowMut"]};

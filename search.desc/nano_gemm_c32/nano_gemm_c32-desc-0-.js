@@ -1,0 +1,1 @@
+searchState.loadedDescShard("nano_gemm_c32", 0, "Imaginary portion of the complex number\nReal portion of the complex number")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Array","Dim","Idx","IdxInc","IdxIncOne","MaybeIdx","MaybeIdxOne","One","Partition","Zero"]};

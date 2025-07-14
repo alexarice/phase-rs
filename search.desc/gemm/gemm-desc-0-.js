@@ -1,0 +1,1 @@
+searchState.loadedDescShard("gemm", 0, "Returns the argument unchanged.\ndst := alpha×dst + beta×lhs×rhs\nImaginary portion of the complex number\nImaginary portion of the complex number\nCalls <code>U::from(self)</code>.\nReal portion of the complex number\nReal portion of the complex number")

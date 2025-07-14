@@ -1,0 +1,1 @@
+searchState.loadedDescShard("qd", 0, "extended precision floating point type.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["cast","v3_fma","v3_fmaf"],"macro":["cast"],"struct":["Avx","Fma","Scalar","Sse","V3","V3Half"],"trait":["Boilerplate","MixedSimd","NullaryFnOnce","Pod","Simd"]};

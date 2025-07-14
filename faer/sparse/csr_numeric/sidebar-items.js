@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["generic"],"struct":["Mut","Own","Ref"]};

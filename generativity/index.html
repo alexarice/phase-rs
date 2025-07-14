@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Create a trusted carrier with a new lifetime that is guaranteed to be unique among other trusted carriers. When you call `make_guard!` to make a unique lifetime, the macro creates a `Guard` to hold it. This guard can be converted `into` an `Id`, which can be stored in structures to uniquely “brand” them. A different invocation of the macro will produce a new lifetime that cannot be unified. The only way to construct these types is with `make_guard!` or `unsafe` code."><title>generativity - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="generativity" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../generativity/index.html">generativity</a><span class="version">1.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>generativity</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/generativity/lib.rs.html#1-225">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Create a trusted carrier with a new lifetime that is guaranteed to be
+unique among other trusted carriers. When you call <a href="macro.make_guard.html" title="macro generativity::make_guard"><code>make_guard!</code></a> to make a
+unique lifetime, the macro creates a <a href="struct.Guard.html" title="struct generativity::Guard"><code>Guard</code></a> to hold it. This guard can be
+converted <code>into</code> an <a href="struct.Id.html" title="struct generativity::Id"><code>Id</code></a>, which can be stored in structures to uniquely
+“brand” them. A different invocation of the macro will produce a new
+lifetime that cannot be unified. The only way to construct these types is
+with <a href="macro.make_guard.html" title="macro generativity::make_guard"><code>make_guard!</code></a> or <code>unsafe</code> code.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>generativity::{Id, make_guard};
+<span class="kw">struct </span>Struct&lt;<span class="lifetime">'id</span>&gt;(Id&lt;<span class="lifetime">'id</span>&gt;);
+<span class="macro">make_guard!</span>(a);
+Struct(a.into());</code></pre></div>
+<p>This is the concept of “generative” lifetime brands. <code>Guard</code> and <code>Id</code> are
+<a href="https://doc.rust-lang.org/nomicon/subtyping.html#variance">invariant</a> over
+their lifetime parameter, meaning that it is never valid to substitute or
+otherwise coerce <code>Id&lt;'a&gt;</code> into <code>Id&lt;'b&gt;</code>, for <em>any</em> concrete <code>'a</code> or <code>'b</code>,
+<em>including</em> the <code>'static</code> lifetime.</p>
+<p>Any invariant lifetime can be “trusted” to carry a brand, so long as they
+are known to be restricted to carrying a brand, and haven’t been derived
+from some untrusted lifetime (or are completely unbound). When using this
+library, it is recommended to always use <code>Id&lt;'id&gt;</code> to carry the brand, as
+this reduces the risk of accidentally trusting an untrusted lifetime.
+Importantly, non-invariant lifetimes <em>cannot</em> be trusted, as the variance
+allows lifetimes to be contracted to match and copy the brand lifetime.</p>
+<p>To achieve lifetime invariance without <code>Id</code>, there are two standard ways:
+<code>PhantomData&lt;&amp;'a mut &amp;'a ()&gt;</code> and <code>PhantomData&lt;fn(&amp;'a ()) -&gt; &amp;'a ()&gt;</code>. The
+former works because <code>&amp;mut T</code> is invariant over <code>T</code>, and the latter works
+because <code>fn(T)</code> is <em>contra</em>variant over <code>T</code> and <code>fn() -&gt; T</code> is <em>co</em>variant
+over <code>T</code>, which combines to <em>in</em>variance. Both are equivalent in this case
+with <code>T = ()</code>, but <code>fn(T) -&gt; T</code> is generally preferred if the only purpose
+is to indicate invariance, as function pointers are a perfect cover for all
+auto traits (e.g. <code>Send</code>, <code>Sync</code>, <code>Unpin</code>, <code>UnwindSafe</code>, etc.) and thus
+only indicates invariance, whereas <code>&amp;mut T</code> can carry further implication
+of “by example” use of <code>PhantomData</code>.</p>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><dl class="item-table"><dt><a class="macro" href="macro.make_guard.html" title="macro generativity::make_guard">make_<wbr>guard</a></dt><dd>Create a <code>Guard</code> with a unique invariant lifetime (with respect to other
+trusted/invariant lifetime brands).</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Guard.html" title="struct generativity::Guard">Guard</a></dt><dd>An invariant lifetime phantomdata-alike that is guaranteed to be unique
+with respect to other trusted invariant lifetimes.</dd><dt><a class="struct" href="struct.Id.html" title="struct generativity::Id">Id</a></dt><dd>A phantomdata-like type taking a single invariant lifetime.</dd></dl></section></div></main></body></html>

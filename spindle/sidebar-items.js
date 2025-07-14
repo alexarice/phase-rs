@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_PAUSE_LIMIT","DEFAULT_SPIN_LIMIT","PAUSE_LIMIT","SPIN_LIMIT"],"fn":["current_num_threads","current_thread_index","for_each","for_each_raw","max_num_threads","relieve_workers","with_lock"]};

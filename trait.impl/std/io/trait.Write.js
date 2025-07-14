@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["anstream",[["impl&lt;S&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> for <a class=\"struct\" href=\"anstream/struct.AutoStream.html\" title=\"struct anstream::AutoStream\">AutoStream</a>&lt;S&gt;<div class=\"where\">where\n    S: <a class=\"trait\" href=\"anstream/stream/trait.RawStream.html\" title=\"trait anstream::stream::RawStream\">RawStream</a> + <a class=\"trait\" href=\"anstream/stream/trait.AsLockedWrite.html\" title=\"trait anstream::stream::AsLockedWrite\">AsLockedWrite</a>,</div>"],["impl&lt;S&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> for <a class=\"struct\" href=\"anstream/struct.StripStream.html\" title=\"struct anstream::StripStream\">StripStream</a>&lt;S&gt;<div class=\"where\">where\n    S: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> + <a class=\"trait\" href=\"anstream/stream/trait.AsLockedWrite.html\" title=\"trait anstream::stream::AsLockedWrite\">AsLockedWrite</a>,</div>"]]],["arrayvec",[["impl&lt;A: <a class=\"trait\" href=\"arrayvec/trait.Array.html\" title=\"trait arrayvec::Array\">Array</a>&lt;Item = <a class=\"primitive\" href=\"https://doc.rust-lang.org/1.88.0/std/primitive.u8.html\">u8</a>&gt;&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> for <a class=\"struct\" href=\"arrayvec/struct.ArrayVec.html\" title=\"struct arrayvec::ArrayVec\">ArrayVec</a>&lt;A&gt;"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1164,485]}

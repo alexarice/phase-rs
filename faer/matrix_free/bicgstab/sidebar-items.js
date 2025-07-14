@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BicgError"],"fn":["bicgstab","bicgstab_scratch"],"struct":["BicgInfo","BicgParams"]};

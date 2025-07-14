@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["factorize_simplicial_numeric_qr_scratch","factorize_simplicial_numeric_qr_unsorted","factorize_simplicial_symbolic_qr","factorize_simplicial_symbolic_qr_scratch"],"struct":["SimplicialQrRef","SymbolicSimplicialQr"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LsmrError"],"fn":["lsmr","lsmr_scratch"],"struct":["LsmrInfo","LsmrParams"]};

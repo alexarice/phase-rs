@@ -1,0 +1,1 @@
+searchState.loadedDescShard("float_pretty_print", 0, "Round and format f64 number for showing it to humans, with …\n<code>f64</code> wrapper to use with formatting code. See the …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

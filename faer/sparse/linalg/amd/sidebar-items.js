@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["order","order_maybe_unsorted","order_maybe_unsorted_scratch","order_scratch"],"struct":["Control","FlopCount"]};

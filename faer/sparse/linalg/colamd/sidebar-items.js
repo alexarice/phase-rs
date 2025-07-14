@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["order","order_scratch"],"struct":["Control"]};

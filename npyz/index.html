@@ -1,0 +1,212 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Serialize and deserialize the NumPy’s *.npy binary format."><title>npyz - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="npyz" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../npyz/index.html">npyz</a><span class="version">0.8.4</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#overview" title="Overview">Overview</a><ul><li><a href="#optional-cargo-features" title="Optional cargo features">Optional cargo features</a></li><li><a href="#reading" title="Reading">Reading</a></li><li><a href="#writing" title="Writing">Writing</a></li><li><a href="#supported-dtypes" title="Supported dtypes">Supported dtypes</a></li><li><a href="#working-with-ndarray" title="Working with `ndarray`">Working with <code>ndarray</code></a></li><li><a href="#structured-arrays" title="Structured arrays">Structured arrays</a></li><li><a href="#npz-files" title="`.npz` files"><code>.npz</code> files</a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>npyz</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/npyz/lib.rs.html#1-303">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Serialize and deserialize the NumPy’s
+<a href="https://docs.scipy.org/doc/numpy-dev/neps/npy-format.html">*.npy binary format</a>.</p>
+<h2 id="overview"><a class="doc-anchor" href="#overview">§</a>Overview</h2>
+<p><a href="https://docs.scipy.org/doc/numpy-dev/neps/npy-format.html"><strong>NPY</strong></a> is a simple binary data format.
+It stores the type, shape and endianness information in a header,
+which is followed by a flat binary data field. This crate offers a simple, mostly type-safe way to
+read and write *.npy files. Files are handled using iterators, so they don’t need to fit in memory.</p>
+<h3 id="optional-cargo-features"><a class="doc-anchor" href="#optional-cargo-features">§</a>Optional cargo features</h3>
+<p>No features are enabled by default.  Here is the list of existing features:</p>
+<ul>
+<li>There are a couple of features which enable support for serialization/deserialization of foreign
+types. These require opt-in because they can be stability hazards; a major version bump of <code>npyz</code>
+may introduce a major version bump of one of these crates.  (NOTE: to ease this issue somewhat,
+<code>npyz</code> will re-export the versions of the crates it uses)
+<ul>
+<li><strong><code>"complex"</code></strong> enables the use of [<code>num_complex::Complex</code>].</li>
+<li><strong><code>"half"</code></strong> enables the use of [<code>half::f16</code>].</li>
+<li><strong><code>"arrayvec"</code></strong> enables the use of [<code>arrayvec::ArrayVec</code>] and [<code>arrayvec::ArrayString</code>]
+as alternatives to <code>Vec</code> and <code>String</code> for some string types.</li>
+</ul>
+</li>
+<li><strong><code>"derive"</code></strong> enables derives of traits for working with structured arrays.</li>
+<li><strong><code>"npz"</code></strong> enables adapters for working with NPZ files
+(including scipy sparse matrices),
+adding a public dependency on the <code>zip</code> crate.
+This requires opt-in because <code>zip</code> has a fair number of transitive dependencies.
+(note that some npz-related helper functions are available even without the feature)</li>
+</ul>
+<h3 id="reading"><a class="doc-anchor" href="#reading">§</a>Reading</h3>
+<p>Let’s create a simple *.npy file in Python:</p>
+<div class="example-wrap"><pre class="language-python"><code>import numpy as np
+a = np.array([1, 3.5, -6, 2.3])
+np.save(&#39;test-data/plain.npy&#39;, a)</code></pre></div>
+<p>Now, we can load it in Rust using <a href="struct.NpyFile.html" title="struct npyz::NpyFile"><code>NpyFile</code></a>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+    <span class="kw">let </span>bytes = std::fs::read(<span class="string">"test-data/plain.npy"</span>)<span class="question-mark">?</span>;
+
+    <span class="comment">// Note: In addition to byte slices, this accepts any io::Read
+    </span><span class="kw">let </span>npy = npyz::NpyFile::new(<span class="kw-2">&amp;</span>bytes[..])<span class="question-mark">?</span>;
+    <span class="kw">for </span>number <span class="kw">in </span>npy.data::&lt;f64&gt;()<span class="question-mark">? </span>{
+        <span class="kw">let </span>number = number<span class="question-mark">?</span>;
+        <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, number);
+    }
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<p>And we can see our data:</p>
+<div class="example-wrap"><pre class="language-text"><code>1
+3.5
+-6
+2.3</code></pre></div><h4 id="inspecting-properties-of-the-array"><a class="doc-anchor" href="#inspecting-properties-of-the-array">§</a>Inspecting properties of the array</h4>
+<p><a href="struct.NpyFile.html" title="struct npyz::NpyFile"><code>NpyFile</code></a> provides methods that let you inspect the array.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>main() -&gt; std::io::Result&lt;()&gt; {
+    <span class="kw">let </span>bytes = std::fs::read(<span class="string">"test-data/c-order.npy"</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>data = npyz::NpyFile::new(<span class="kw-2">&amp;</span>bytes[..])<span class="question-mark">?</span>;
+    <span class="macro">assert_eq!</span>(data.shape(), <span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]);
+    <span class="macro">assert_eq!</span>(data.order(), npyz::Order::C);
+    <span class="macro">assert_eq!</span>(data.strides(), <span class="kw-2">&amp;</span>[<span class="number">12</span>, <span class="number">4</span>, <span class="number">1</span>]);
+
+    <span class="comment">// convenience method for reading to vec
+    </span><span class="macro">println!</span>(<span class="string">"{:?}"</span>, data.into_vec::&lt;f64&gt;());
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h3 id="writing"><a class="doc-anchor" href="#writing">§</a>Writing</h3>
+<p>The primary interface for writing npy files is the <a href="trait.WriterBuilder.html" title="trait npyz::WriterBuilder"><code>WriterBuilder</code></a> trait.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>npyz::WriterBuilder;
+
+<span class="kw">fn </span>main() -&gt; std::io::Result&lt;()&gt; {
+    <span class="comment">// Any io::Write is supported.  For this example we'll
+    // use Vec&lt;u8&gt; to serialize in-memory.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>out_buf = <span class="macro">vec!</span>[];
+    <span class="kw">let </span><span class="kw-2">mut </span>writer = {
+        npyz::WriteOptions::new()
+            .default_dtype()
+            .shape(<span class="kw-2">&amp;</span>[<span class="number">2</span>, <span class="number">3</span>])
+            .writer(<span class="kw-2">&amp;mut </span>out_buf)
+            .begin_nd()<span class="question-mark">?
+    </span>};
+
+    writer.push(<span class="kw-2">&amp;</span><span class="number">100</span>)<span class="question-mark">?</span>;
+    writer.push(<span class="kw-2">&amp;</span><span class="number">101</span>)<span class="question-mark">?</span>;
+    writer.push(<span class="kw-2">&amp;</span><span class="number">102</span>)<span class="question-mark">?</span>;
+    <span class="comment">// you can also write multiple items at once
+    </span>writer.extend(<span class="macro">vec!</span>[<span class="number">200</span>, <span class="number">201</span>, <span class="number">202</span>])<span class="question-mark">?</span>;
+    writer.finish()<span class="question-mark">?</span>;
+
+    <span class="macro">eprintln!</span>(<span class="string">"{:02x?}"</span>, out_buf);
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h3 id="supported-dtypes"><a class="doc-anchor" href="#supported-dtypes">§</a>Supported dtypes</h3>
+<p>A complete description of the supported numpy dtypes and the corresponding rust types
+can be found on the <a href="type_matchup_docs/index.html" title="mod npyz::type_matchup_docs"><code>crate::type_matchup_docs</code></a> module.</p>
+<h3 id="working-with-ndarray"><a class="doc-anchor" href="#working-with-ndarray">§</a>Working with <code>ndarray</code></h3>
+<p>Using the <a href="https://docs.rs/ndarray"><code>ndarray</code></a> crate?  No problem!
+At the time, no conversion API is provided by <code>npyz</code>, but one can easily be written:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Example of parsing to an array with fixed NDIM.
+</span><span class="kw">fn </span>to_array_3&lt;T&gt;(data: Vec&lt;T&gt;, shape: Vec&lt;u64&gt;, order: npyz::Order) -&gt; ndarray::Array3&lt;T&gt; {
+    <span class="kw">use </span>ndarray::ShapeBuilder;
+
+    <span class="kw">let </span>shape = <span class="kw">match </span>shape[..] {
+        [i1, i2, i3] =&gt; [i1 <span class="kw">as </span>usize, i2 <span class="kw">as </span>usize, i3 <span class="kw">as </span>usize],
+        <span class="kw">_  </span>=&gt; <span class="macro">panic!</span>(<span class="string">"expected 3D array"</span>),
+    };
+    <span class="kw">let </span>true_shape = shape.set_f(order == npyz::Order::Fortran);
+
+    ndarray::Array3::from_shape_vec(true_shape, data)
+        .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"shape error: {}"</span>, e))
+}
+
+<span class="comment">// Example of parsing to an array with dynamic NDIM.
+</span><span class="kw">fn </span>to_array_d&lt;T&gt;(data: Vec&lt;T&gt;, shape: Vec&lt;u64&gt;, order: npyz::Order) -&gt; ndarray::ArrayD&lt;T&gt; {
+    <span class="kw">use </span>ndarray::ShapeBuilder;
+
+    <span class="kw">let </span>shape = shape.into_iter().map(|x| x <span class="kw">as </span>usize).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="kw">let </span>true_shape = shape.set_f(order == npyz::Order::Fortran);
+
+    ndarray::ArrayD::from_shape_vec(true_shape, data)
+        .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"shape error: {}"</span>, e))
+}
+
+<span class="kw">pub fn </span>main() -&gt; std::io::Result&lt;()&gt; {
+    <span class="kw">let </span>bytes = std::fs::read(<span class="string">"test-data/c-order.npy"</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>reader = npyz::NpyFile::new(<span class="kw-2">&amp;</span>bytes[..])<span class="question-mark">?</span>;
+    <span class="kw">let </span>shape = reader.shape().to_vec();
+    <span class="kw">let </span>order = reader.order();
+    <span class="kw">let </span>data = reader.into_vec::&lt;i64&gt;()<span class="question-mark">?</span>;
+
+    <span class="macro">println!</span>(<span class="string">"{:?}"</span>, to_array_3(data.clone(), shape.clone(), order));
+    <span class="macro">println!</span>(<span class="string">"{:?}"</span>, to_array_d(data.clone(), shape.clone(), order));
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<p>Likewise, here is a function that can be used to write an ndarray:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io;
+<span class="kw">use </span>std::fs::File;
+
+<span class="kw">use </span>ndarray::Array;
+<span class="kw">use </span>npyz::WriterBuilder;
+
+<span class="comment">// Example of writing an array with unknown shape.  The output is always C-order.
+</span><span class="kw">fn </span>write_array&lt;T, S, D&gt;(writer: <span class="kw">impl </span>io::Write, array: <span class="kw-2">&amp;</span>ndarray::ArrayBase&lt;S, D&gt;) -&gt; io::Result&lt;()&gt;
+<span class="kw">where
+    </span>T: Clone + npyz::AutoSerialize,
+    S: ndarray::Data&lt;Elem=T&gt;,
+    D: ndarray::Dimension,
+{
+    <span class="kw">let </span>shape = array.shape().iter().map(|<span class="kw-2">&amp;</span>x| x <span class="kw">as </span>u64).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="kw">let </span>c_order_items = array.iter();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>writer = npyz::WriteOptions::new().default_dtype().shape(<span class="kw-2">&amp;</span>shape).writer(writer).begin_nd()<span class="question-mark">?</span>;
+    writer.extend(c_order_items)<span class="question-mark">?</span>;
+    writer.finish()
+}
+
+<span class="kw">pub fn </span>main() -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>array = Array::from_shape_fn((<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>), |(i, j, k)| <span class="number">100</span><span class="kw-2">*</span>i <span class="kw">as </span>i32 + <span class="number">10</span><span class="kw-2">*</span>j <span class="kw">as </span>i32 + k <span class="kw">as </span>i32);
+    <span class="comment">// even weirdly-ordered axes and non-contiguous arrays are fine
+    </span><span class="kw">let </span>view = array.view(); <span class="comment">// shape (6, 7, 8), C-order
+    </span><span class="kw">let </span>view = view.reversed_axes(); <span class="comment">// shape (8, 7, 6), fortran order
+    </span><span class="kw">let </span>view = view.slice(<span class="macro">ndarray::s!</span>[.., .., ..;<span class="number">2</span>]); <span class="comment">// shape (8, 7, 3), non-contiguous
+    </span><span class="macro">assert_eq!</span>(view.shape(), <span class="kw-2">&amp;</span>[<span class="number">8</span>, <span class="number">7</span>, <span class="number">3</span>]);
+
+    <span class="kw">let </span><span class="kw-2">mut </span>file = io::BufWriter::new(File::create(<span class="string">"examples/output/ndarray.npy"</span>)<span class="question-mark">?</span>);
+    write_array(<span class="kw-2">&amp;mut </span>file, <span class="kw-2">&amp;</span>view)
+}</code></pre></div>
+<h3 id="structured-arrays"><a class="doc-anchor" href="#structured-arrays">§</a>Structured arrays</h3>
+<p><code>npyz</code> supports structured arrays!  Consider the following structured array created in Python:</p>
+<div class="example-wrap"><pre class="language-python"><code>import numpy as np
+a = np.array([(1,2.5,4), (2,3.1,5)], dtype=[(&#39;a&#39;, &#39;i4&#39;),(&#39;b&#39;, &#39;f4&#39;),(&#39;c&#39;, &#39;i8&#39;)])
+np.save(&#39;test-data/simple.npy&#39;, a)</code></pre></div>
+<p>To load this in Rust, we need to create a corresponding struct.
+There are three derivable traits we can define for it:</p>
+<ul>
+<li><a href="trait.Deserialize.html" title="trait npyz::Deserialize"><code>Deserialize</code></a> — Enables easy reading of <code>.npy</code> files.</li>
+<li><a href="trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a> — Enables easy writing of <code>.npy</code> files. (in a default format)</li>
+<li><a href="trait.Serialize.html" title="trait npyz::Serialize"><code>Serialize</code></a> — Supertrait of <code>AutoSerialize</code> that allows one to specify a custom <a href="enum.DType.html" title="enum npyz::DType"><code>DType</code></a>.</li>
+</ul>
+<p><strong>Enable the <code>"derive"</code> feature in <code>Cargo.toml</code>,</strong>
+and make sure the field names and types all match up:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// make sure to add `features = ["derive"]` in Cargo.toml!
+</span><span class="attr">#[derive(npyz::Deserialize, Debug)]
+</span><span class="kw">struct </span>Struct {
+    a: i32,
+    b: f32,
+    c: i64,
+}
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+    <span class="kw">let </span>bytes = std::fs::read(<span class="string">"test-data/structured.npy"</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>npy = npyz::NpyFile::new(<span class="kw-2">&amp;</span>bytes[..])<span class="question-mark">?</span>;
+    <span class="kw">for </span>row <span class="kw">in </span>npy.data::&lt;Struct&gt;()<span class="question-mark">? </span>{
+        <span class="kw">let </span>row = row<span class="question-mark">?</span>;
+        <span class="macro">eprintln!</span>(<span class="string">"{:?}"</span>, row);
+    }
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<p>The output is:</p>
+<div class="example-wrap"><pre class="language-text"><code>Array { a: 1, b: 2.5, c: 4 }
+Array { a: 2, b: 3.1, c: 5 }</code></pre></div><h3 id="npz-files"><a class="doc-anchor" href="#npz-files">§</a><code>.npz</code> files</h3>
+<ul>
+<li>To work with <code>.npz</code> files in general, see the <a href="npz/index.html" title="mod npyz::npz"><code>npz</code> module</a>.</li>
+<li>To work with <code>scipy.sparse</code> matrices see the [<code>sparse</code> module][<code>sparse</code>].</li>
+</ul>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="npz/index.html" title="mod npyz::npz">npz</a></dt><dd>Utilities for working with <code>npz</code> files.</dd><dt><a class="mod" href="type_matchup_docs/index.html" title="mod npyz::type_matchup_docs">type_<wbr>matchup_<wbr>docs</a></dt><dd>DType to/from rust type documentation.</dd><dt><a class="mod" href="write_options/index.html" title="mod npyz::write_options">write_<wbr>options</a></dt><dd>Types and traits related to the implementation of <a href="struct.WriteOptions.html" title="struct npyz::WriteOptions"><code>WriteOptions</code></a>.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.DTypeError.html" title="struct npyz::DTypeError">DType<wbr>Error</a></dt><dd>Indicates that a particular rust type does not support serialization or deserialization
+as a given <a href="enum.DType.html" title="enum npyz::DType"><code>DType</code></a>.</dd><dt><a class="struct" href="struct.Field.html" title="struct npyz::Field">Field</a></dt><dd>A field of a structured array dtype</dd><dt><a class="struct" href="struct.FixedSizeBytes.html" title="struct npyz::FixedSizeBytes">Fixed<wbr>Size<wbr>Bytes</a></dt><dd>Wrapper around <code>[u8; N]</code> that can serialize as <code>|VN</code>.  The size must match exactly.</dd><dt><a class="struct" href="struct.NpyData.html" title="struct npyz::NpyData">NpyData</a><wbr><span class="stab deprecated" title="">Deprecated</span></dt><dd>Legacy type for reading <code>npy</code> files.</dd><dt><a class="struct" href="struct.NpyFile.html" title="struct npyz::NpyFile">NpyFile</a></dt><dd>Object for reading an <code>npy</code> file.</dd><dt><a class="struct" href="struct.NpyHeader.html" title="struct npyz::NpyHeader">NpyHeader</a></dt><dd>Represents the parsed header portion of an <code>npy</code> file.</dd><dt><a class="struct" href="struct.NpyReader.html" title="struct npyz::NpyReader">NpyReader</a></dt><dd>Iterator returned by <a href="struct.NpyFile.html#method.data" title="method npyz::NpyFile::data"><code>NpyFile::data</code></a> which reads elements of type T from the
+data portion of an NPY file.</dd><dt><a class="struct" href="struct.NpyWriter.html" title="struct npyz::NpyWriter">NpyWriter</a></dt><dd>Interface for writing an NPY file to a data stream.</dd><dt><a class="struct" href="struct.ParseTypeStrError.html" title="struct npyz::ParseTypeStrError">Parse<wbr>Type<wbr>StrError</a></dt><dd>Error type returned by <code>&lt;TypeStr as FromStr&gt;::parse</code>.</dd><dt><a class="struct" href="struct.TypeStr.html" title="struct npyz::TypeStr">TypeStr</a></dt><dd>Represents an Array Interface type-string.</dd><dt><a class="struct" href="struct.WriteOptions.html" title="struct npyz::WriteOptions">Write<wbr>Options</a></dt><dd>Represents an almost-empty configuration for an <a href="struct.NpyWriter.html" title="struct npyz::NpyWriter"><code>NpyWriter</code></a>.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.DType.html" title="enum npyz::DType">DType</a></dt><dd>Representation of a Numpy type</dd><dt><a class="enum" href="enum.Endianness.html" title="enum npyz::Endianness">Endianness</a></dt><dd>Represents the first character in a <a href="struct.TypeStr.html" title="struct npyz::TypeStr"><code>TypeStr</code></a>, which describes endianness.</dd><dt><a class="enum" href="enum.Order.html" title="enum npyz::Order">Order</a></dt><dd>Order of axes in a file.</dd><dt><a class="enum" href="enum.TimeUnits.html" title="enum npyz::TimeUnits">Time<wbr>Units</a></dt><dd>Represents the units of the <code>m</code> and <code>M</code> datatypes in a <a href="struct.TypeStr.html" title="struct npyz::TypeStr"><code>TypeStr</code></a>.</dd><dt><a class="enum" href="enum.TypeChar.html" title="enum npyz::TypeChar">Type<wbr>Char</a></dt><dd>Represents the second character in a <a href="struct.TypeStr.html" title="struct npyz::TypeStr"><code>TypeStr</code></a>.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.AutoSerialize.html" title="trait npyz::AutoSerialize">Auto<wbr>Serialize</a></dt><dd>Subtrait of <a href="trait.Serialize.html" title="trait npyz::Serialize"><code>Serialize</code></a> for types which have a reasonable default <a href="enum.DType.html" title="enum npyz::DType"><code>DType</code></a>.</dd><dt><a class="trait" href="trait.Deserialize.html" title="trait npyz::Deserialize">Deserialize</a></dt><dd>Trait that permits reading a type from an <code>.npy</code> file.</dd><dt><a class="trait" href="trait.Serialize.html" title="trait npyz::Serialize">Serialize</a></dt><dd>Trait that permits writing a type to an <code>.npy</code> file.</dd><dt><a class="trait" href="trait.TypeRead.html" title="trait npyz::TypeRead">Type<wbr>Read</a></dt><dd>Like some sort of <code>for&lt;R: io::Read&gt; Fn(R) -&gt; io::Result&lt;T&gt;</code>.</dd><dt><a class="trait" href="trait.TypeReadDyn.html" title="trait npyz::TypeReadDyn">Type<wbr>Read<wbr>Dyn</a></dt><dd>The proper trait to use for trait objects of <a href="trait.TypeRead.html" title="trait npyz::TypeRead"><code>TypeRead</code></a>.</dd><dt><a class="trait" href="trait.TypeWrite.html" title="trait npyz::TypeWrite">Type<wbr>Write</a></dt><dd>Like some sort of <code>for&lt;W: io::Write&gt; Fn(W, &amp;T) -&gt; io::Result&lt;()&gt;</code>.</dd><dt><a class="trait" href="trait.TypeWriteDyn.html" title="trait npyz::TypeWriteDyn">Type<wbr>Write<wbr>Dyn</a></dt><dd>The proper trait to use for trait objects of <a href="trait.TypeWrite.html" title="trait npyz::TypeWrite"><code>TypeWrite</code></a>.</dd><dt><a class="trait" href="trait.WriterBuilder.html" title="trait npyz::WriterBuilder">Writer<wbr>Builder</a></dt><dd>Trait that provides methods on <a href="struct.WriteOptions.html" title="struct npyz::WriteOptions"><code>WriteOptions</code></a>.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.to_file.html" title="fn npyz::to_file">to_file</a><wbr><span class="stab deprecated" title="">Deprecated</span></dt><dd>Serialize an iterator over a struct to a NPY file.</dd><dt><a class="fn" href="fn.to_file_1d.html" title="fn npyz::to_file_1d">to_<wbr>file_<wbr>1d</a></dt><dd>Serialize an iterator over a struct to a NPY file.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.OutFile.html" title="type npyz::OutFile">OutFile</a><wbr><span class="stab deprecated" title="">Deprecated</span></dt><dd><a href="struct.NpyWriter.html" title="struct npyz::NpyWriter"><code>NpyWriter</code></a> that writes an entire file.</dd></dl></section></div></main></body></html>

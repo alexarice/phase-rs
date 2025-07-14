@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["partial_eigen","partial_eigen_scratch"],"struct":["PartialEigenInfo","PartialEigenParams"]};

@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="DType to/from rust type documentation."><title>npyz::type_matchup_docs - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="npyz" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../npyz/index.html">npyz</a><span class="version">0.8.4</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module type_<wbr>matchup_<wbr>docs</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#simple-primitive-types" title="Simple primitive types">Simple primitive types</a><ul><li><a href="#integers" title="Integers">Integers</a></li><li><a href="#floats" title="Floats">Floats</a></li><li><a href="#complex" title="Complex">Complex</a></li><li><a href="#bool" title="Bool">Bool</a></li><li><a href="#endianness" title="Endianness">Endianness</a></li></ul></li><li><a href="#date-and-time" title="Date and time">Date and time</a></li><li><a href="#string-and-blob-types" title="String and blob types">String and blob types</a><ul><li><a href="#overview" title="Overview">Overview</a></li><li><a href="#raw-byte-blobs-vn" title="Raw byte blobs (`|VN`)">Raw byte blobs (<code>|VN</code>)</a></li><li><a href="#unicode-strings-un-un" title="Unicode strings (`&#60;UN`, `&#62;UN`)">Unicode strings (<code>&lt;UN</code>, <code>&gt;UN</code>)</a></li><li><a href="#possibly-null-terminated-byte-blobs-sn" title="Possibly-null-terminated byte blobs (`|SN`)">Possibly-null-terminated byte blobs (<code>|SN</code>)</a></li><li><a href="#arrayvec-feature" title="`&#34;arrayvec&#34;` feature"><code>"arrayvec"</code> feature</a></li></ul></li><li><a href="#structured-arrays" title="Structured arrays">Structured arrays</a><ul><li><a href="#array-members" title="Array members">Array members</a></li></ul></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate npyz</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">npyz</a></div><h1>Module <span>type_matchup_docs</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/npyz/type_matchup_docs.rs.html#1-209">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>DType to/from rust type documentation.</p>
+<blockquote>
+<p>This module does not export any items.  It is used solely as a documentation page.</p>
+</blockquote>
+<p>This page describes all of the numpy datatypes supported by all of the <a href="../trait.Serialize.html" title="trait npyz::Serialize"><code>Serialize</code></a>,
+<a href="../trait.Deserialize.html" title="trait npyz::Deserialize"><code>Deserialize</code></a>, and <a href="../trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a> impls provided by this crate.  These descriptions mainly
+focus on describing which numpy type character codes are supported by each rust type.</p>
+<p>The documentation of numpy’s character codes (and its type strings in general) can be found here:</p>
+<ul>
+<li><a href="https://numpy.org/doc/stable/reference/arrays.interface.html#python-side">numpy <code>__array_interface__</code> documentation</a></li>
+</ul>
+<h3 id="simple-primitive-types"><a class="doc-anchor" href="#simple-primitive-types">§</a>Simple primitive types</h3>
+<p>Integers and floats correspond to simple dtypes:</p>
+<h4 id="integers"><a class="doc-anchor" href="#integers">§</a>Integers</h4>
+<ul>
+<li>The rust types <code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code> use type code <code>i</code>.</li>
+<li>The rust types <code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code> use type code <code>u</code>.</li>
+</ul>
+<p><strong>Notice:</strong> numpy does not support 128-bit integers</li></p>
+<h4 id="floats"><a class="doc-anchor" href="#floats">§</a>Floats</h4>
+<ul>
+<li>The rust types <code>f32</code>, <code>f64</code> use type code <code>f</code>.</li>
+<li>When the <strong><code>"half"</code></strong> feature is enabled, <a href="https://doc.rust-lang.org/1.88.0/std/primitive.f16.html" title="primitive f16"><code>f16</code></a> is also supported.</li>
+</ul>
+<p><strong>Notice:</strong> numpy <em>does</em> have 128-bit floats, but it is not currently supported by <code>npyz</code>.</p>
+<h4 id="complex"><a class="doc-anchor" href="#complex">§</a>Complex</h4>
+<p>When the <strong><code>"complex"</code></strong> feature is enabled, rust types [<code>Complex32</code>] and [<code>Complex64</code>] may use type code <code>c</code>.</p>
+<p><strong>Notice:</strong> numpy does have have complex numbers backed by 128-bit floats, but this is not supported by <code>npyz</code>.</p>
+<h4 id="bool"><a class="doc-anchor" href="#bool">§</a>Bool</h4>
+<p>The rust type <code>bool</code> may be serialized as <code>|b1</code>.</p>
+<h4 id="endianness"><a class="doc-anchor" href="#endianness">§</a>Endianness</h4>
+<p>In all of the above cases, npyz uses the machine endianness by default when serializing, but
+supports serializing and deserializing as any endianness.  The size of the datatype in the file
+must match the size of the rust type used.</p>
+<h3 id="date-and-time"><a class="doc-anchor" href="#date-and-time">§</a>Date and time</h3>
+<p>There are two type codes used by numpy for time and date.</p>
+<ul>
+<li><code>m</code>: A <code>numpy.timedelta64</code>.</li>
+<li><code>M</code>: A <code>numpy.datetime64</code>.</li>
+</ul>
+<p>Both of these are represented as 8-byte signed integers, and therefore can use <strong><code>i64</code></strong> in rust.</p>
+<p>The type strings for these types must specify units in square brackets, e.g. <code>"&lt;m8[ns]"</code> for
+nanoseconds.</p>
+<h3 id="string-and-blob-types"><a class="doc-anchor" href="#string-and-blob-types">§</a>String and blob types</h3><h4 id="overview"><a class="doc-anchor" href="#overview">§</a>Overview</h4>
+<p>There are three type codes for variable-sized strings of data found in npy files:</p>
+<ul>
+<li><code>|VN</code>: A fixed-size array of <code>N</code> bytes.</li>
+<li><code>|SN</code> (or <code>|aN</code>): A possibly-null-terminated sequence of bytes of length <code>&lt;= N</code>.</li>
+<li><code>&lt;UN</code>: An array of <code>N</code> Unicode code points, each encoded as a 4-byte integer.</li>
+</ul>
+<p>Each will be described in its own section further below.
+The following support matrix shows how various rust types may serialize as these type codes.</p>
+<div><table><thead><tr><th style="text-align: left">rust type</th><th>feature</th><th><code>VM</code></th><th><code>SM</code>/<code>aM</code></th><th><code>UM</code></th><th><a href="../trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a> dtype</th><th style="text-align: left">notes</th></tr></thead><tbody>
+<tr><td style="text-align: left"><code>String</code>/<code>str</code></td><td></td><td>❌</td><td>✅</td><td>✅</td><td>➖</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><code>Vec&lt;u8&gt;</code>/<code>[u8]</code></td><td></td><td>✅</td><td>✅</td><td>❌</td><td>➖</td><td style="text-align: left">length must <code>== M</code> when writing <code>V</code></td></tr>
+<tr><td style="text-align: left"><code>Vec&lt;u32&gt;</code>/<code>[u32]</code></td><td></td><td>❌</td><td>❌</td><td>✅</td><td>➖</td><td style="text-align: left">most general type to read <code>U</code></td></tr>
+<tr><td style="text-align: left"><code>Vec&lt;char&gt;</code>/<code>[char]</code></td><td></td><td>❌</td><td>❌</td><td>✅</td><td>➖</td><td style="text-align: left"></td></tr>
+<tr><td style="text-align: left"><a href="../struct.FixedSizeBytes.html" title="struct npyz::FixedSizeBytes"><code>FixedSizeBytes</code></a><code>&lt;N&gt;</code></td><td></td><td>✅</td><td>❌</td><td>❌</td><td><code>VN</code></td><td style="text-align: left">requires <code>N == M</code></td></tr>
+<tr><td style="text-align: left">[<code>ArrayVec</code>]<code>&lt;u8, N&gt;</code></td><td><code>"arrayvec"</code></td><td>✅</td><td>✅</td><td>❌</td><td>➖</td><td style="text-align: left"><code>VM</code> requires <code>M &lt;= N</code> upfront <br/> <code>S</code>/<code>a</code> truncates when reading</td></tr>
+<tr><td style="text-align: left">[<code>ArrayVec</code>]<code>&lt;u32, N&gt;</code></td><td><code>"arrayvec"</code></td><td>❌</td><td>❌</td><td>✅</td><td><code>UN</code></td><td style="text-align: left">truncates when reading</td></tr>
+<tr><td style="text-align: left">[<code>ArrayVec</code>]<code>&lt;char, N&gt;</code></td><td><code>"arrayvec"</code></td><td>❌</td><td>❌</td><td>✅</td><td><code>UN</code></td><td style="text-align: left">truncates when reading</td></tr>
+<tr><td style="text-align: left">[<code>ArrayString</code>]<code>&lt;N&gt;</code></td><td><code>"arrayvec"</code></td><td>❌</td><td>✅</td><td>W</td><td><code>SN</code></td><td style="text-align: left">truncates when reading</td></tr>
+</tbody></table>
+</div>
+<p>Legend:</p>
+<ul>
+<li>❌: Cannot read or write as this dtype.</li>
+<li>✅: Can read and write as this dtype.</li>
+<li>➖: This type does not implement <a href="../trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a>.</li>
+<li>W: Can be written but not read.</li>
+</ul>
+<h4 id="raw-byte-blobs-vn"><a class="doc-anchor" href="#raw-byte-blobs-vn">§</a>Raw byte blobs (<code>|VN</code>)</h4>
+<p>This is the simplest sequence type.  It is a blob of exactly <code>N</code> bytes.</p>
+<p>This type is most easily read as <code>Vec&lt;u8&gt;</code>.  However, if <code>N</code> is known at compile-time, then
+the individual heap allocations per item can be avoided by using <a href="../struct.FixedSizeBytes.html" title="struct npyz::FixedSizeBytes"><code>FixedSizeBytes</code></a> instead;
+this is a newtype wrapper around <code>[u8; N]</code>.</p>
+<p>(you cannot use <code>[u8; N]</code> directly because this would be ambiguous in a structured array;
+see the section on “Array members”)</p>
+<h4 id="unicode-strings-un-un"><a class="doc-anchor" href="#unicode-strings-un-un">§</a>Unicode strings (<code>&lt;UN</code>, <code>&gt;UN</code>)</h4>
+<p>This is the type natively used by numpy for Python 3’s <code>str</code>.</p>
+<p>It is an array of <code>N</code> Unicode code points, each encoded as a 4-byte integer.
+Trailing null code points are not considered to be part of the content. (but interior nulls are)</p>
+<p>Notice these are “code points” and not “scalar values”!
+One could think of this format as “UTF-32, but surrogates are allowed”.
+The following Rust types are supported:</p>
+<ul>
+<li><code>Vec&lt;u32&gt;</code>, which is able to read any valid <code>U</code> value from a file.</li>
+<li><code>Vec&lt;char&gt;</code>, which will fail on reading surrogates.</li>
+<li><code>String</code>, which will fail on reading surrogates.</li>
+</ul>
+<p>Notice that <code>String</code> also alternatively supports <code>|SN</code> if you want a more compressed representation
+in the file, however this is a non-standard convention (see the section on <code>|SN</code> for more details).</p>
+<h4 id="possibly-null-terminated-byte-blobs-sn"><a class="doc-anchor" href="#possibly-null-terminated-byte-blobs-sn">§</a>Possibly-null-terminated byte blobs (<code>|SN</code>)</h4>
+<p>This is a legacy string type that roughly corresponds to Python 2’s <code>str</code>.</p>
+<p>This is similar to <code>|VN</code>, but trailing 0 bytes are not considered to be part of the content.
+(Interior null bytes, on the other hand, are part of the content).  numpy itself places no
+restrictions on the contents of the bytes.</p>
+<p>The most natural type to decode this with is <code>Vec&lt;u8&gt;</code>.</p>
+<p>However, npyz also supports <code>String</code> for this type.  When reading <code>S</code> into <code>String</code>, the contents
+must be valid UTF-8, or reading will fail.  Using <code>S</code> for UTF-8 encoded strings is not
+a standard practice in python, so beware when using this on files from unknown sources!</p>
+<h4 id="arrayvec-feature"><a class="doc-anchor" href="#arrayvec-feature">§</a><code>"arrayvec"</code> feature</h4>
+<p>The types described above for <code>S</code> and <code>U</code> all require individual heap allocations for each item,
+which may be costly in terms of memory.  To address this, one may enable the <code>"arrayvec"</code> feature
+to allow the serialization/deserialization of types from [<code>arrayvec</code>].</p>
+<p>These types have the additional benefit that they implement <a href="../trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a> (by defaulting to the
+const parameter <code>N</code> as their size), though they all support dtypes with arbitrary size.</p>
+<p>When reading a string that is too long to fit in the destination type, it will be truncated.
+The justification is that there is no straightforward way for downstream code to implement such
+recovery behavior on their own.
+Truncation is only performed on <code>S</code>, <code>a</code>, and <code>U</code> data (never on <code>V</code> data), and always produces a
+valid value of that type.  (e.g. <code>ArrayString&lt;N&gt;</code> will truncate to a valid UTF-8 prefix, while
+<code>ArrayVec&lt;u8, N&gt;</code> will truncate to arbitrary bytes).</p>
+<p>If you do not wish to allow truncation to occur, you may check that <a href="../struct.TypeStr.html#method.size_field" title="method npyz::TypeStr::size_field"><code>TypeStr::size_field</code></a><code>() &lt;= N</code>.
+(<code>N</code> being the const length of the arrayvec)</p>
+<p>The [<code>arrayvec</code>] types support almost all of the same operations as their heap-allocated
+counterparts. However, reading <code>U</code> into [<code>ArrayString</code>] is expressly forbidden, because
+due to the transcoding, there is no reliable way for the caller to detect when truncation may
+have occurred.</p>
+<h3 id="structured-arrays"><a class="doc-anchor" href="#structured-arrays">§</a>Structured arrays</h3>
+<p>One can work with structured arrays by enabling the <strong><code>"derive"</code></strong> feature, which provides derive
+macros for <a href="../trait.Serialize.html" title="trait npyz::Serialize"><code>Serialize</code></a>, <a href="../trait.Deserialize.html" title="trait npyz::Deserialize"><code>Deserialize</code></a>, and <a href="../trait.AutoSerialize.html" title="trait npyz::AutoSerialize"><code>AutoSerialize</code></a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// make sure to add `features = ["derive"]` in Cargo.toml!
+</span><span class="attr">#[derive(npyz::Deserialize)]
+</span><span class="kw">struct </span>Struct {
+    a: i32,
+    b: f32,
+}</code></pre></div>
+<p>This type can be used to deserialize the numpy dtype <code>np.dtype([('a', '&lt;i4'), ('b', '&lt;f4')])</code>.</p>
+<h4 id="array-members"><a class="doc-anchor" href="#array-members">§</a>Array members</h4>
+<p>Members of structured arrays are allowed to be n-dimensional arrays.  These can be represented
+in rust using the primitive array type <code>[T; N]</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// make sure to add `features = ["derive"]` in Cargo.toml!
+</span><span class="attr">#[derive(npyz::Deserialize)]
+</span><span class="kw">struct </span>Struct {
+    a: [[i32; <span class="number">3</span>]; <span class="number">4</span>],
+}</code></pre></div>
+<p>This type can deserialize the numpy dtype <code>np.dtype([('a', '&lt;i4', (4, 3))])</code>.</p>
+</div></details></section></div></main></body></html>

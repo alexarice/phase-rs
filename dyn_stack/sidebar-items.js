@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["alloc","mem"],"struct":["Bump","DynArray","MemStack","PodStack","StackReq","UnpodStack"],"trait":["Error"],"type":["DynStack"]};

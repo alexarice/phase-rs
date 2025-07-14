@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CgError"],"fn":["conjugate_gradient","conjugate_gradient_scratch"],"struct":["CgInfo","CgParams"]};

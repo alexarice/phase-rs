@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This crate provides a type `Value` that represents a Python literal. `Value` can be parsed from a string and formatted as a string."><title>py_literal - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="py_literal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../py_literal/index.html">py_<wbr>literal</a><span class="version">0.4.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#enums">Crate Items</a></h3><ul class="block"><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>py_literal</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/py_literal/lib.rs.html#1-247">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This crate provides a type <a href="enum.Value.html"><code>Value</code></a> that represents a <a href="https://docs.python.org/3/reference/lexical_analysis.html#literals">Python literal</a>.
+<a href="enum.Value.html"><code>Value</code></a> can be parsed from a string and formatted as a string.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>num;
+<span class="kw">extern crate </span>py_literal;
+
+<span class="kw">use </span>num::{BigInt, Complex};
+<span class="kw">use </span>py_literal::Value;
+
+<span class="comment">// Parse a literal value from a string.
+</span><span class="kw">let </span>value: Value = <span class="string">"{ 'foo': [5, (7e3,)], 2 - 5j: {b'bar'} }"</span>.parse()<span class="question-mark">?</span>;
+<span class="macro">assert_eq!</span>(
+    value,
+    Value::Dict(<span class="macro">vec!</span>[
+        (
+            Value::String(<span class="string">"foo"</span>.to_string()),
+            Value::List(<span class="macro">vec!</span>[
+                Value::Integer(BigInt::from(<span class="number">5</span>)),
+                Value::Tuple(<span class="macro">vec!</span>[Value::Float(<span class="number">7e3</span>)]),
+            ]),
+        ),
+        (
+            Value::Complex(Complex::new(<span class="number">2.</span>, -<span class="number">5.</span>)),
+            Value::Set(<span class="macro">vec!</span>[Value::Bytes(<span class="string">b"bar"</span>.to_vec())]),
+        ),
+    ]),
+);
+
+<span class="comment">// Format a literal value as a string.
+</span><span class="kw">let </span>formatted = <span class="macro">format!</span>(<span class="string">"{}"</span>, value);
+<span class="macro">assert_eq!</span>(
+    formatted,
+    <span class="string">"{'foo': [5, (7e3,)], 2-5j: {b'bar'}}"</span>,
+);</code></pre></div>
+</div></details><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.FormatError.html" title="enum py_literal::FormatError">Format<wbr>Error</a></dt><dd>Error formatting a Python literal.</dd><dt><a class="enum" href="enum.ParseError.html" title="enum py_literal::ParseError">Parse<wbr>Error</a></dt><dd>Error parsing a Python literal.</dd><dt><a class="enum" href="enum.Value.html" title="enum py_literal::Value">Value</a></dt><dd>Python literal.</dd></dl></section></div></main></body></html>

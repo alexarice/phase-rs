@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["make_guard"],"struct":["Guard","Id"]};

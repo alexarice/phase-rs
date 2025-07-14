@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["generic"],"struct":["Mut","Own","Ref"],"trait":["AsMat","AsMatMut","AsMatRef","MatIndex"],"type":["Mat","MatMut","MatRef"]};

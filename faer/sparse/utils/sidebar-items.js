@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["adjoint","permute_dedup_self_adjoint","permute_dedup_self_adjoint_scratch","permute_self_adjoint","permute_self_adjoint_scratch","permute_self_adjoint_to_unsorted","sort_dedup_indices","sort_indices","transpose","transpose_dedup","transpose_dedup_scratch","transpose_scratch"]};

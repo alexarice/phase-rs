@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["avx","f64x1","f64x2"]};
