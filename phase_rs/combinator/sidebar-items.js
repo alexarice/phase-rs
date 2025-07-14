@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["command","eval","eval_circ","parsing","syntax","typecheck","unitary"]};

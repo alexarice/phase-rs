@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AtomRInner","PatAtomRInner"],"fn":["parse_spanned"],"struct":["PatTensorRInner","PatternRInner","Spanned","TensorRInner","TermRInner"],"type":["AtomR","PatAtomR","PatTensorR","PatternR","TensorR","TermR"]};
