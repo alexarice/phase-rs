@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PatAtomRInner"],"struct":["PatTensorRInner","PatternRInner"],"type":["PatAtomR","PatTensorR","PatternR"]};

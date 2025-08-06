@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AtomRInner","PatAtomRInner"],"struct":["PatTensorRInner","PatternRInner","TensorRInner","TermRInner"],"type":["AtomR","PatAtomR","PatTensorR","PatternR","TensorR","TermR"]};
+window.SIDEBAR_ITEMS = {"mod":["pattern","term"]};
