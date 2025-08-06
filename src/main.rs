@@ -65,6 +65,6 @@ fn main() {
     };
 
     if let Err(e) = parse_and_check(&src) {
-        eprintln!("{}", e)
+        eprintln!("{e}")
     }
 }
