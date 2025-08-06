@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["combinator","text"]};
+window.SIDEBAR_ITEMS = {"mod":["combinator","ket","phase","text"]};
