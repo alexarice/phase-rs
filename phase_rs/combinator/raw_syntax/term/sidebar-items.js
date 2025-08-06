@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AtomRInner"],"struct":["TensorRInner","TermRInner"],"type":["AtomR","TensorR","TermR"]};
+window.SIDEBAR_ITEMS = {"enum":["AtomRInner"],"fn":["tm"],"struct":["TensorRInner","TermRInner"],"type":["AtomR","TensorR","TermR"]};
