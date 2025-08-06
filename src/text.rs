@@ -17,6 +17,12 @@ pub trait ToDoc {
     fn to_doc(&self) -> RcDoc;
 }
 
+/// Trait for types which can be parsed
+pub trait HasParser: Sized {
+    /// Parse an element of this type.
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self>;
+}
+
 /// Wraps data of type `T` in a span of type `S`, locating it in the source text.
 /// The span is ignored when printing.
 #[derive(Clone, Debug, PartialEq)]
@@ -25,15 +31,6 @@ pub struct Spanned<S, T> {
     pub inner: T,
     /// Text span
     pub span: S,
-}
-
-/// Parse a `Spanned<Range<usize>, T>` using a parser for `T`.
-pub fn parse_spanned<'a, T, E>(
-    inner: impl Parser<LocatingSlice<&'a str>, T, E>,
-) -> impl Parser<LocatingSlice<&'a str>, Spanned<Range<usize>, T>, E> {
-    inner
-        .with_span()
-        .map(|(t, span)| Spanned { inner: t, span })
 }
 
 impl<S, T: ToDoc> ToDoc for Spanned<S, T> {
@@ -51,8 +48,17 @@ impl<T> From<T> for Spanned<(), T> {
     }
 }
 
+impl<T: HasParser> HasParser for Spanned<Range<usize>, T> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        T::parser
+            .with_span()
+            .map(|(inner, span)| Spanned { inner, span })
+            .parse_next(input)
+    }
+}
+
 /// Parse a comment
-pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
+pub fn comment_parser(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
     (
         multispace0,
         repeat::<_, _, (), _, _>(0.., ("//", take_until(0.., "\n"), multispace0).value(())),
@@ -61,13 +67,24 @@ pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
     Ok(())
 }
 
-/// Parse an identifier
-pub fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
-    alphanumeric1
-        .map(|s: &str| s.to_owned())
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+/// An identifier
+pub struct Name(String);
+
+impl ToDoc for Name {
+    fn to_doc(&self) -> RcDoc {
+        RcDoc::text(&self.0)
+    }
+}
+
+impl HasParser for Name {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        alphanumeric1
+        .map(|s: &str| Name(s.to_owned()))
         .context(StrContext::Label("identifier"))
         .context(StrContext::Expected(StrContextValue::Description(
             "alphanumeric string",
         )))
         .parse_next(input)
+    }
 }

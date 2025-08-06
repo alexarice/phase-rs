@@ -3,7 +3,7 @@
 //! Circuit-normal syntax is designed to allow extraction to Hadamard/Controlled phase circuits.
 
 use super::typed_syntax::{PatternT, TermT, TermType};
-use crate::{ket::KetState, phase::Phase};
+use crate::{ket::{CompKetState, KetState}, phase::Phase};
 
 /// Circuit-normal terms.
 ///
@@ -65,7 +65,7 @@ impl ClauseC {
 fn state_to_pattern(s: Option<KetState>) -> PatternT {
     s.map_or(
         PatternT::Unitary(Box::new(TermT::Id(TermType(1)))),
-        |state| PatternT::Ket(vec![state]),
+        |state| PatternT::Ket(CompKetState::single(state))
     )
 }
 

@@ -6,10 +6,10 @@ use super::{
     raw_syntax::{PatternR, TermR},
     typed_syntax::{PatternType, TermT, TermType},
 };
-use crate::combinator::raw_syntax::{
+use crate::{combinator::raw_syntax::{
     pattern::PatTensorR,
     term::{AtomR, TensorR},
-};
+}, text::Name};
 
 /// Errors that can occur during typechecking.
 #[derive(Debug, Clone)]
@@ -50,7 +50,7 @@ pub enum TypeCheckError<S> {
     /// Error for an unknown top-level symbol.
     UnknownSymbol {
         /// The unknown symbol encountered
-        name: String,
+        name: Name,
         /// Span of symbol
         span: S,
     },
@@ -65,4 +65,4 @@ pub enum TypeCheckError<S> {
 
 /// Typing enviroment, holding definitions of top level symbols.
 #[derive(Default)]
-pub struct Env(pub(crate) HashMap<String, TermT>);
+pub struct Env(pub(crate) HashMap<Name, TermT>);

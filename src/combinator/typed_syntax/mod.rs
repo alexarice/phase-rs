@@ -10,13 +10,11 @@ use crate::{
     combinator::{
         circuit_syntax::{ClauseC, PatternC, TermC},
         raw_syntax::{
-            PatternR, TermR,
-            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
-            term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
+            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner}, term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner}, PatternR, TermR
         },
     },
-    ket::KetState,
-    phase::Phase,
+    ket::CompKetState,
+    phase::Phase, text::Name,
 };
 
 /// A unitary type "qn <-> qn"
@@ -57,7 +55,7 @@ pub enum TermT {
     /// Top level symbol, a named gate
     Gate {
         /// Name of symbol/gate
-        name: String,
+        name: Name,
         /// Definition of symbol
         def: Box<TermT>,
     },
@@ -103,7 +101,7 @@ pub enum PatternT {
     /// A tensor "p_1 x ... x p_n"
     Tensor(Vec<PatternT>),
     /// A sequence of ket states "|xyz>", equivalent to "|x> x |y> x |z>"
-    Ket(Vec<KetState>),
+    Ket(CompKetState),
     /// A unitary pattern
     Unitary(Box<TermT>),
 }
@@ -117,7 +115,7 @@ impl PatternT {
                 patterns.last().unwrap().get_type().1,
             ),
             PatternT::Tensor(patterns) => patterns.iter().map(PatternT::get_type).sum(),
-            PatternT::Ket(states) => PatternType(states.len(), 0),
+            PatternT::Ket(states) => PatternType(states.qubits(), 0),
             PatternT::Unitary(inner) => inner.get_type().to_pattern_type(),
         }
     }
@@ -170,7 +168,7 @@ impl PatternT {
                 }
             }
             PatternT::Ket(states) => {
-                for (state, i) in states.iter().zip(inj.drain(0..states.len())) {
+                for (state, i) in states.iter().zip(inj.drain(0..states.qubits())) {
                     pattern.parts[i] = Some(*state)
                 }
             }

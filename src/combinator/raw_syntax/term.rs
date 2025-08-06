@@ -1,6 +1,6 @@
 //! Raw syntax terms.
 
-use std::{borrow::Cow, ops::Range};
+use std::ops::Range;
 
 use pretty::RcDoc;
 use winnow::{
@@ -12,12 +12,12 @@ use winnow::{
 
 use crate::{
     combinator::{
-        raw_syntax::{PatternR, pattern::pattern},
+        raw_syntax::PatternR,
         typecheck::{Env, TypeCheckError},
         typed_syntax::{TermT, TermType},
     },
-    phase::{Phase, phase},
-    text::{Spanned, ToDoc, identifier, parse_spanned},
+    phase::Phase,
+    text::{HasParser, Name, Spanned, ToDoc},
 };
 
 /// Raw syntax term with text span.
@@ -84,7 +84,7 @@ pub enum AtomRInner<S> {
         inner: Box<AtomR<S>>,
     },
     /// Top level symbol, a named gate
-    Gate(String),
+    Gate(Name),
     /// Inverse of a term "t ^ -1"
     Inverse(Box<AtomR<S>>),
     /// Square root of a term "sqrt(t)"
@@ -99,10 +99,10 @@ impl<S> ToDoc for AtomRInner<S> {
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            AtomRInner::Id(qubits) => RcDoc::text(if *qubits == 1 {
-                Cow::Borrowed("id")
+            AtomRInner::Id(qubits) => RcDoc::text("id").append(if *qubits == 1 {
+                RcDoc::nil()
             } else {
-                Cow::Owned(format!("id{qubits}"))
+                RcDoc::as_string(qubits)
             }),
             AtomRInner::Phase(phase) => phase.to_doc(),
             AtomRInner::IfLet { pattern, inner, .. } => RcDoc::text("if let")
@@ -112,7 +112,7 @@ impl<S> ToDoc for AtomRInner<S> {
                 .group()
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
                 .group(),
-            AtomRInner::Gate(name) => RcDoc::text(name),
+            AtomRInner::Gate(name) => name.to_doc(),
             AtomRInner::Inverse(inner) => inner.to_doc().append(" ^ -1"),
             AtomRInner::Sqrt(inner) => RcDoc::text("sqrt(")
                 .append(RcDoc::line().append(inner.to_doc()).nest(2))
@@ -203,7 +203,7 @@ impl<S: Clone> AtomR<S> {
                     })
                 } else {
                     Err(TypeCheckError::UnknownSymbol {
-                        name: name.to_owned(),
+                        name: name.clone(),
                         span: self.span.clone(),
                     })
                 }
@@ -225,59 +225,86 @@ impl<S: Clone> AtomR<S> {
     }
 }
 
-/// Parser for terms.
-pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
-    parse_spanned(
-        separated(1.., tensor, (multispace0, ';', multispace0))
+impl HasParser for TermRInner<Range<usize>> {
+    /// Parser for terms.
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        separated(1.., TensorR::parser, (multispace0, ';', multispace0))
             .context(StrContext::Label("term"))
-            .map(|terms| TermRInner { terms }),
-    )
-    .parse_next(input)
+            .map(|terms| TermRInner { terms })
+            .parse_next(input)
+    }
 }
 
-fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>> {
-    parse_spanned(
-        separated(1.., atom, (multispace0, 'x', multispace0))
+impl HasParser for TensorRInner<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        separated(1.., AtomR::parser, (multispace0, 'x', multispace0))
             .context(StrContext::Label("term"))
-            .map(|terms| TensorRInner { terms }),
-    )
-    .parse_next(input)
+            .map(|terms| TensorRInner { terms })
+            .parse_next(input)
+    }
 }
 
-fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
-    parse_spanned((
-	alt((
-	    delimited(("(", multispace0),
-		      cut_err(tm),
-		      cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
-		.map(AtomRInner::Brackets),
-	    preceded(("sqrt", multispace0), cut_err(atom))
-		.map(|inner| AtomRInner::Sqrt(Box::new(inner))),
-	    preceded("id", opt(dec_uint))
-		.map(|qubits| AtomRInner::Id(qubits.unwrap_or(1))),
-	    preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
-	    .map(|(pattern, inner)| AtomRInner::IfLet{ pattern, inner: Box::new(inner) }),
-	    phase.map(AtomRInner::Phase),
-	    identifier.map(AtomRInner::Gate)
-	)).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
-	    .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
-	    .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
-	    .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
-	    .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
-	    .context(StrContext::Expected(StrContextValue::Description("identifier"))),
-	opt((
-	    multispace0,
-	    "^",
-	    multispace0,
-	    cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1"))),
-	)).context(StrContext::Label("term"))
-    )
-	.with_span()
-	.map(|((inner, invert), span)| {
-	    if invert.is_some() {
-		AtomRInner::Inverse ( Box::new(Spanned { inner, span }) )
-	    } else {
-		inner
-	    }}))
-	.parse_next(input)
+impl HasParser for AtomRInner<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        let without_inverse = alt((
+            delimited(
+                ("(", multispace0),
+                cut_err(TermR::parser),
+                cut_err(
+                    (multispace0, ")")
+                        .context(StrContext::Expected(StrContextValue::CharLiteral(')'))),
+                ),
+            )
+            .map(AtomRInner::Brackets),
+            preceded(("sqrt", multispace0), cut_err(AtomR::parser))
+                .map(|inner| AtomRInner::Sqrt(Box::new(inner))),
+            preceded("id", opt(dec_uint)).map(|qubits| AtomRInner::Id(qubits.unwrap_or(1))),
+            preceded(
+                "if",
+                cut_err(seq!(
+		_: multispace1,
+		_: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))),
+		_: multispace1,
+		PatternR::parser,
+		_: multispace1,
+		_: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))),
+		_: multispace1,
+		AtomR::parser)),
+            )
+            .map(|(pattern, inner)| AtomRInner::IfLet {
+                pattern,
+                inner: Box::new(inner),
+            }),
+            Phase::parser.map(AtomRInner::Phase),
+            Name::parser.map(AtomRInner::Gate),
+        ))
+        .context(StrContext::Expected(StrContextValue::CharLiteral('(')))
+        .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
+        .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
+        .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
+        .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
+        .context(StrContext::Expected(StrContextValue::Description(
+            "identifier",
+        )));
+
+        (
+            without_inverse,
+            opt((
+                multispace0,
+                "^",
+                multispace0,
+                cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1"))),
+            ))
+            .context(StrContext::Label("term")),
+        )
+            .with_span()
+            .map(|((inner, invert), span)| {
+                if invert.is_some() {
+                    AtomRInner::Inverse(Box::new(Spanned { inner, span }))
+                } else {
+                    inner
+                }
+            })
+            .parse_next(input)
+    }
 }

@@ -10,7 +10,7 @@ use winnow::{
     combinator::{alt, delimited, repeat},
 };
 
-use crate::text::ToDoc;
+use crate::text::{HasParser, ToDoc};
 
 /// Holds the value of a ket pattern.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -24,6 +24,8 @@ pub enum KetState {
     /// |-> pattern
     Minus,
 }
+
+const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
 
 impl KetState {
     /// Returns the complement of the state.
@@ -46,37 +48,6 @@ impl KetState {
             KetState::Minus => '-',
         }
     }
-}
-
-/// Parse a composite ket state of the form '|("0"|"1"|"+"|"-")+>'
-pub fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<Vec<KetState>> {
-    delimited(
-        "|",
-        repeat(
-            1..,
-            alt((
-                "0".value(KetState::Zero),
-                "1".value(KetState::One),
-                "+".value(KetState::Plus),
-                "-".value(KetState::Minus),
-            )),
-        ),
-        ">",
-    )
-    .parse_next(input)
-}
-
-impl ToDoc for Vec<KetState> {
-    fn to_doc(&self) -> RcDoc {
-        RcDoc::text("|")
-            .append(self.iter().map(KetState::to_char).collect::<String>())
-            .append(">")
-    }
-}
-
-const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
-
-impl KetState {
     /// Returns the vector this `KetState` represents.
     pub fn to_state(self) -> Mat<Complex<f64>> {
         match self {
@@ -85,5 +56,59 @@ impl KetState {
             KetState::Plus => mat![[CISQRT2], [CISQRT2]],
             KetState::Minus => mat![[CISQRT2], [-CISQRT2]],
         }
+    }
+}
+
+/// Holds a composite ket state of the form '|("0"|"1"|"+"|"-")+>'
+#[derive(Clone, Debug, PartialEq)]
+pub struct CompKetState(Vec<KetState>);
+
+impl CompKetState {
+    /// Get the number of qubits this state needs to be stored.
+    pub fn qubits(&self) -> usize {
+	self.0.len()
+    }
+
+    /// An iterator over the individual states for each qubit.
+    pub fn iter(&self) -> impl Iterator<Item = &KetState> {
+	self.0.iter()
+    }
+
+    /// Create a new composite ket state from a `Vec` of `KetState`
+    pub fn new(states: Vec<KetState>) -> Self {
+	CompKetState(states)
+    }
+
+    /// Create a new composite ket state from a single `KetState`
+    pub fn single(state: KetState) -> Self {
+	CompKetState::new(vec![state])
+    }
+}
+
+impl ToDoc for CompKetState {
+    fn to_doc(&self) -> RcDoc {
+        RcDoc::text("|")
+            .append(self.0.iter().map(KetState::to_char).collect::<String>())
+            .append(">")
+    }
+}
+
+impl HasParser for CompKetState {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        delimited(
+            "|",
+            repeat(
+                1..,
+                alt((
+                    "0".value(KetState::Zero),
+                    "1".value(KetState::One),
+                    "+".value(KetState::Plus),
+                    "-".value(KetState::Minus),
+                )),
+            ),
+            ">",
+        )
+        .map(CompKetState)
+        .parse_next(input)
     }
 }

@@ -7,7 +7,7 @@ use winnow::{
     combinator::{alt, delimited},
 };
 
-use crate::text::ToDoc;
+use crate::text::{HasParser, ToDoc};
 
 /// Represents a (global) phase operation.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -49,22 +49,6 @@ impl Phase {
     }
 }
 
-/// Parser for phases.
-pub fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
-    alt((
-        "-1".value(Phase::MinusOne),
-        "i".value(Phase::Imag),
-        "-i".value(Phase::MinusImag),
-        delimited(
-            ("ph(", multispace0),
-            float,
-            (multispace0, "pi", multispace0, ")"),
-        )
-        .map(Phase::Angle),
-    ))
-    .parse_next(input)
-}
-
 impl ToDoc for Phase {
     fn to_doc(&self) -> RcDoc {
         match self {
@@ -73,5 +57,22 @@ impl ToDoc for Phase {
             Phase::Imag => RcDoc::text("i"),
             Phase::MinusImag => RcDoc::text("-i"),
         }
+    }
+}
+
+impl HasParser for Phase {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        alt((
+            "-1".value(Phase::MinusOne),
+            "i".value(Phase::Imag),
+            "-i".value(Phase::MinusImag),
+            delimited(
+                ("ph(", multispace0),
+                float,
+                (multispace0, "pi", multispace0, ")"),
+            )
+            .map(Phase::Angle),
+        ))
+        .parse_next(input)
     }
 }

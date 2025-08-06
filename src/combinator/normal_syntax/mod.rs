@@ -9,7 +9,7 @@ use faer::{Mat, mat};
 use num_complex::Complex;
 
 use super::typed_syntax::{PatternT, PatternType, TermT, TermType};
-use crate::{ket::KetState, phase::Phase};
+use crate::{ket::{CompKetState, KetState}, phase::Phase};
 
 /// A normal-form term
 #[derive(Clone, Debug, PartialEq)]
@@ -230,7 +230,7 @@ impl PatternN {
             PatternN::Tensor(patterns) => {
                 PatternT::Tensor(patterns.iter().map(PatternN::quote).collect())
             }
-            PatternN::Ket(state) => PatternT::Ket(vec![*state]),
+            PatternN::Ket(state) => PatternT::Ket(CompKetState::single(*state)),
             PatternN::Unitary(inner) => PatternT::Unitary(Box::new(inner.quote())),
         }
     }

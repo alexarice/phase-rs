@@ -2,10 +2,10 @@ use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
 use phase_rs::{
-    combinator::{command::command, normal_syntax::TermN},
-    text::ToDoc,
+    combinator::{command::Command, normal_syntax::TermN},
+    text::{HasParser, ToDoc},
 };
-use winnow::{LocatingSlice, Parser, ascii::multispace0, combinator::terminated};
+use winnow::{LocatingSlice, Parser};
 
 /// Interpreter for "it's just a phase"
 #[derive(clap::Parser)]
@@ -16,7 +16,7 @@ struct Args {
 }
 
 fn parse_and_check(src: &str) -> anyhow::Result<()> {
-    let parsed = terminated(command, multispace0)
+    let parsed = Command::parser
         .parse(LocatingSlice::new(src))
         .map_err(|e| anyhow::format_err!("{e}"))?;
     let (_env, checked) = parsed.check().map_err(|e| anyhow::format_err!("{e:?}"))?;

@@ -11,12 +11,12 @@ use winnow::{
 
 use crate::{
     combinator::{
-        raw_syntax::{TermR, term::tm},
+        raw_syntax::TermR,
         typecheck::{Env, TypeCheckError},
         typed_syntax::PatternT,
     },
-    ket::{KetState, ket},
-    text::{Spanned, ToDoc, parse_spanned},
+    ket::CompKetState,
+    text::{HasParser, Spanned, ToDoc},
 };
 
 /// Raw syntax pattern with text span.
@@ -72,7 +72,7 @@ pub enum PatAtomRInner<S> {
     /// A pattern enclosed in parentheses
     Brackets(PatternR<S>),
     /// A sequence of ket states "|xyz>", equivalent to "|x> x |y> x |z>"
-    Ket(Vec<KetState>),
+    Ket(CompKetState),
     /// A unitary pattern
     Unitary(Box<TermR<S>>),
 }
@@ -142,28 +142,30 @@ impl<S: Clone> PatAtomR<S> {
     }
 }
 
-/// Parse a pattern
-pub fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
-    parse_spanned(
-        separated(1.., pattern_tensor, (multispace0, '.', multispace0))
-            .map(|patterns| PatternRInner { patterns }),
-    )
-    .parse_next(input)
+impl HasParser for PatternRInner<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        separated(1.., PatTensorR::parser, (multispace0, '.', multispace0))
+            .map(|patterns| PatternRInner { patterns })
+            .parse_next(input)
+    }
 }
 
-fn pattern_tensor(input: &mut LocatingSlice<&str>) -> ModalResult<PatTensorR<Range<usize>>> {
-    parse_spanned(
-        separated(1.., pattern_atom, (multispace0, 'x', multispace0))
-            .map(|patterns| PatTensorRInner { patterns }),
-    )
-    .parse_next(input)
+impl HasParser for PatTensorRInner<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        separated(1.., PatAtomR::parser, (multispace0, 'x', multispace0))
+            .map(|patterns| PatTensorRInner { patterns })
+            .parse_next(input)
+    }
 }
 
-fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
-    parse_spanned(alt((
-        delimited(("(", multispace0), pattern, (multispace0, ")")).map(PatAtomRInner::Brackets),
-        ket.map(PatAtomRInner::Ket),
-        tm.map(|x| PatAtomRInner::Unitary(Box::new(x))),
-    )))
-    .parse_next(input)
+impl HasParser for PatAtomRInner<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        alt((
+            delimited(("(", multispace0), PatternR::parser, (multispace0, ")"))
+                .map(PatAtomRInner::Brackets),
+            CompKetState::parser.map(PatAtomRInner::Ket),
+            TermR::parser.map(|x| PatAtomRInner::Unitary(Box::new(x))),
+        ))
+        .parse_next(input)
+    }
 }

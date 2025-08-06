@@ -17,15 +17,15 @@ use super::{
     typed_syntax::TermT,
 };
 use crate::{
-    combinator::raw_syntax::{TermR, term::tm},
-    text::{comment, identifier},
+    combinator::raw_syntax::TermR,
+    text::{HasParser, Name, comment_parser},
 };
 
 /// The Command structure: a runnable program.
 #[derive(Clone, Debug)]
 pub struct Command<S> {
     /// List of gates to define, with the name to bind them to.
-    pub gates: Vec<(String, TermR<S>)>,
+    pub gates: Vec<(Name, TermR<S>)>,
     /// Final term to evaluate.
     pub term: TermR<S>,
 }
@@ -43,22 +43,21 @@ impl<S: Clone> Command<S> {
     }
 }
 
-fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usize>>)> {
-    preceded(
+impl HasParser for Command<Range<usize>> {
+    fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
+        let gate = preceded(
 	"gate",
 	cut_err(seq!(_: multispace1,
-		     identifier,
+		     Name::parser,
 		     _: (multispace0, "=", multispace0).context(StrContext::Expected(StrContextValue::CharLiteral('='))),
-		     tm,
+		     TermR::parser,
 		     _: (multispace0, ","))).context(StrContext::Label("gate definition"))
-    ).parse_next(input)
-}
+    );
 
-/// Parse a command
-pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usize>>> {
-    comment.parse_next(input)?;
-    let gates = repeat(0.., terminated(gate, comment)).parse_next(input)?;
-    let term = tm.context(StrContext::Label("Term")).parse_next(input)?;
-    comment.parse_next(input)?;
-    Ok(Command { gates, term })
+        comment_parser.parse_next(input)?;
+        let gates = repeat(0.., terminated(gate, comment_parser)).parse_next(input)?;
+        let term = TermR::parser.context(StrContext::Label("Term")).parse_next(input)?;
+        comment_parser.parse_next(input)?;
+        Ok(Command { gates, term })
+    }
 }
