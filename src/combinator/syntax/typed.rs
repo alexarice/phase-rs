@@ -5,7 +5,7 @@
 
 use std::iter::Sum;
 
-use crate::{ket::KetState, phase::Phase};
+use crate::{combinator::syntax::normal::{AtomN, Buildable, PatternN}, ket::KetState, phase::Phase};
 
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -109,4 +109,75 @@ impl PatternT {
             PatternT::Unitary(inner) => inner.get_type().to_pattern_type(),
         }
     }
+
+    /// Evaluate a term to a `PatternN`, expanding top level definitions
+    /// and evaluating inverse and sqrt macros.
+    fn eval(&self) -> PatternN {
+        match self {
+            PatternT::Comp(patterns) => {
+                if patterns.len() == 1 {
+                    patterns[0].eval()
+                } else {
+                    PatternN::Comp(
+                        patterns.iter().map(PatternT::eval).collect(),
+                        self.get_type(),
+                    )
+                }
+            }
+            PatternT::Tensor(patterns) => {
+                if patterns.len() == 1 {
+                    patterns[0].eval()
+                } else {
+                    PatternN::Tensor(patterns.iter().map(PatternT::eval).collect())
+                }
+            }
+            PatternT::Ket(states) => {
+                PatternN::Tensor(states.iter().map(|&state| PatternN::Ket(state)).collect())
+            }
+            PatternT::Unitary(inner) => inner.eval(),
+        }
+    }
 }
+
+
+impl TermT {
+    /// Evaluate a term to a given `Buildable` type, expanding top level definitions
+    /// and evaluating inverse and sqrt macros.
+    /// In particular this can be used to generate a `TermN` from a `TermT`.
+    pub fn eval<B: Buildable>(&self) -> B {
+        self.eval_with_phase_mul(1.0)
+    }
+
+    fn eval_with_phase_mul<B: Buildable>(&self, phase_mul: f64) -> B {
+        match self {
+            TermT::Comp(terms) => {
+                let mut mapped_terms = terms.iter().map(|t| t.eval_with_phase_mul(phase_mul));
+                if terms.len() == 1 {
+                    mapped_terms.next().unwrap()
+                } else if phase_mul > 0.0 {
+                    B::comp(mapped_terms, &terms.first().unwrap().get_type())
+                } else {
+                    B::comp(mapped_terms.rev(), &terms.first().unwrap().get_type())
+                }
+            }
+            TermT::Tensor(terms) => {
+                if terms.len() == 1 {
+                    terms[0].eval_with_phase_mul(phase_mul)
+                } else {
+                    B::tensor(terms.iter().map(|t| t.eval_with_phase_mul(phase_mul)))
+                }
+            }
+            TermT::Id(ty) => B::comp(std::iter::empty(), ty),
+            TermT::Phase(phase) => B::atom(AtomN::Phase(phase_mul * phase.eval())),
+            TermT::IfLet { pattern, inner } => B::atom(AtomN::IfLet(
+                pattern.eval(),
+                Box::new(inner.eval_with_phase_mul(phase_mul)),
+                TermType(pattern.get_type().0),
+            )),
+            TermT::Gate { def, .. } => def.eval_with_phase_mul(phase_mul),
+            TermT::Inverse(inner) => inner.eval_with_phase_mul(-phase_mul),
+            TermT::Sqrt(inner) => inner.eval_with_phase_mul(phase_mul / 2.0),
+        }
+    }
+}
+

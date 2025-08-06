@@ -4,7 +4,7 @@
 //! This is assumed to be typechecked/well-formed.
 
 use super::typed::{PatternType, TermType};
-use crate::ket::KetState;
+use crate::{combinator::syntax::typed::{PatternT, TermT}, ket::KetState, phase::Phase};
 
 use std::f64::consts::PI;
 
@@ -130,5 +130,198 @@ impl PatternN {
                 (inner.to_unitary(), Mat::zeros(1 << size, 1 << size))
             }
         }
+    }
+}
+
+
+impl TermN {
+    /// Return a `TermT` which is the "quotation" of this normal-form term.
+    /// Realises that all normal-form terms are also terms.
+    pub fn quote(&self) -> TermT {
+        match self {
+            TermN::Comp(terms, ty) => {
+                if terms.is_empty() {
+                    TermT::Id(*ty)
+                } else {
+                    TermT::Comp(terms.iter().map(TermN::quote).collect())
+                }
+            }
+            TermN::Tensor(terms) => TermT::Tensor(terms.iter().map(TermN::quote).collect()),
+            TermN::Atom(atom) => atom.quote(),
+        }
+    }
+
+    fn squash_comp(mut self, acc: &mut Vec<TermN>) {
+        if let TermN::Comp(terms, _) = self {
+            for t in terms {
+                t.squash_comp(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    fn squash_tensor(mut self, acc: &mut Vec<TermN>) {
+        if let TermN::Tensor(terms) = self {
+            for t in terms {
+                t.squash_tensor(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    /// Simplifies compositions, tensors, and identities in the given normal-form term.
+    pub fn squash(&mut self) {
+        match self {
+            TermN::Comp(terms, _) => {
+                let old_terms = std::mem::take(terms);
+                for t in old_terms {
+                    t.squash_comp(terms);
+                }
+                if terms.len() == 1 {
+                    *self = terms.pop().unwrap();
+                }
+            }
+            TermN::Tensor(terms) => {
+                let old_terms = std::mem::take(terms);
+                for t in old_terms {
+                    t.squash_tensor(terms);
+                }
+                if terms.len() == 1 {
+                    *self = terms.pop().unwrap();
+                }
+            }
+            TermN::Atom(atom) => atom.squash(),
+        }
+    }
+}
+
+impl AtomN {
+    fn quote(&self) -> TermT {
+        match self {
+            AtomN::Phase(angle) => TermT::Phase(Phase::from_angle(*angle)),
+            AtomN::IfLet(pattern, inner, _) => TermT::IfLet {
+                pattern: pattern.quote(),
+                inner: Box::new(inner.quote()),
+            },
+        }
+    }
+
+    fn squash(&mut self) {
+        if let AtomN::IfLet(pattern, inner, _) = self {
+            pattern.squash();
+            inner.squash();
+        }
+    }
+}
+
+impl PatternN {
+    /// Return a `PatternT` which is the "quotation" of this normal-form pattern.
+    /// Realises that all normal-form patterns are also patterns.
+    pub fn quote(&self) -> PatternT {
+        match self {
+            PatternN::Comp(patterns, ty) => {
+                if patterns.is_empty() {
+                    PatternT::Unitary(Box::new(TermT::Id(TermType(ty.0))))
+                } else {
+                    PatternT::Comp(patterns.iter().map(PatternN::quote).collect())
+                }
+            }
+            PatternN::Tensor(patterns) => {
+                PatternT::Tensor(patterns.iter().map(PatternN::quote).collect())
+            }
+            PatternN::Ket(state) => PatternT::Ket(vec![*state]),
+            PatternN::Unitary(inner) => PatternT::Unitary(Box::new(inner.quote())),
+        }
+    }
+
+    fn squash_comp(mut self, acc: &mut Vec<PatternN>) {
+        if let PatternN::Comp(patterns, _) = self {
+            for p in patterns {
+                p.squash_comp(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    fn squash_tensor(mut self, acc: &mut Vec<PatternN>) {
+        if let PatternN::Tensor(patterns) = self {
+            for p in patterns {
+                p.squash_tensor(acc);
+            }
+        } else {
+            self.squash();
+            acc.push(self);
+        }
+    }
+
+    /// Simplifies compositions, tensors, and identities in the given normal-form pattern.
+    pub fn squash(&mut self) {
+        match self {
+            PatternN::Comp(patterns, _) => {
+                let old_patterns = std::mem::take(patterns);
+                for p in old_patterns {
+                    p.squash_comp(patterns);
+                }
+                if patterns.len() == 1 {
+                    *self = patterns.pop().unwrap();
+                }
+            }
+            PatternN::Tensor(patterns) => {
+                let old_patterns = std::mem::take(patterns);
+                for p in old_patterns {
+                    p.squash_tensor(patterns);
+                }
+                if patterns.len() == 1 {
+                    *self = patterns.pop().unwrap();
+                }
+            }
+            PatternN::Ket(_) => {}
+            PatternN::Unitary(inner) => inner.squash(),
+        }
+    }
+}
+
+/// Trait for objects that can built with compositions, tensors, or from an `AtomN`.
+pub trait Buildable {
+    /// Build a composition object from a sequence of subobjects and a given type.
+    /// Subobjects should be given in diagrammatic order, not function composition order.
+    fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self;
+    /// Build a tensor product from a sequence of subobjects.
+    fn tensor(iter: impl Iterator<Item = Self>) -> Self;
+    /// Build an object from an atom.
+    fn atom(atom: AtomN) -> Self;
+}
+
+impl Buildable for TermN {
+    fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self {
+        TermN::Comp(iter.collect(), *ty)
+    }
+
+    fn tensor(iter: impl Iterator<Item = Self>) -> Self {
+        TermN::Tensor(iter.collect())
+    }
+
+    fn atom(atom: AtomN) -> Self {
+        TermN::Atom(atom)
+    }
+}
+
+impl Buildable for PatternN {
+    fn comp(iter: impl DoubleEndedIterator<Item = Self>, ty: &TermType) -> Self {
+        PatternN::Comp(iter.rev().collect(), PatternType(ty.0, ty.0))
+    }
+
+    fn tensor(iter: impl Iterator<Item = Self>) -> Self {
+        PatternN::Tensor(iter.collect())
+    }
+
+    fn atom(atom: AtomN) -> Self {
+        PatternN::Unitary(Box::new(atom))
     }
 }
