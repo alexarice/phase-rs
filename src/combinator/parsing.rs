@@ -4,23 +4,19 @@ use std::ops::Range;
 
 use winnow::{
     LocatingSlice, ModalResult, Parser,
-    ascii::{alphanumeric1, dec_uint, multispace0, multispace1},
-    combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq, terminated},
+    ascii::{dec_uint, multispace0, multispace1},
+    combinator::{alt, cut_err, delimited, opt, preceded, separated, seq},
     error::{StrContext, StrContextValue},
-    token::take_until,
 };
 
-use super::{
-    command::Command,
-    raw_syntax::{
+use super::raw_syntax::{
         AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
         PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
-    },
-};
+    };
 use crate::{
     ket::ket,
     phase::phase,
-    text::{Spanned, parse_spanned},
+    text::{identifier, parse_spanned, Spanned},
 };
 
 /// Parser for terms.
@@ -106,42 +102,3 @@ fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<u
     .parse_next(input)
 }
 
-fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
-    alphanumeric1
-        .map(|s: &str| s.to_owned())
-        .context(StrContext::Label("identifier"))
-        .context(StrContext::Expected(StrContextValue::Description(
-            "alphanumeric string",
-        )))
-        .parse_next(input)
-}
-
-fn gate(input: &mut LocatingSlice<&str>) -> ModalResult<(String, TermR<Range<usize>>)> {
-    preceded(
-	"gate",
-	cut_err(seq!(_: multispace1,
-		     identifier,
-		     _: (multispace0, "=", multispace0).context(StrContext::Expected(StrContextValue::CharLiteral('='))),
-		     tm,
-		     _: (multispace0, ","))).context(StrContext::Label("gate definition"))
-    ).parse_next(input)
-}
-
-/// Parse a comment
-pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
-    (
-        multispace0,
-        repeat::<_, _, (), _, _>(0.., ("//", take_until(0.., "\n"), multispace0).value(())),
-    )
-        .parse_next(input)?;
-    Ok(())
-}
-
-/// Parse a command
-pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usize>>> {
-    comment.parse_next(input)?;
-    let gates = repeat(0.., terminated(gate, comment)).parse_next(input)?;
-    let term = tm.context(StrContext::Label("Term")).parse_next(input)?;
-    comment.parse_next(input)?;
-    Ok(Command { gates, term })
-}

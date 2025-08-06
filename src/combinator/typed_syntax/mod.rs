@@ -6,7 +6,7 @@
 use std::iter::Sum;
 
 use super::normal_syntax::{AtomN, Buildable, PatternN};
-use crate::{combinator::circuit_syntax::{ClauseC, PatternC, TermC}, ket::KetState, phase::Phase};
+use crate::{combinator::{circuit_syntax::{ClauseC, PatternC, TermC}, raw_syntax::{AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR, PatternRInner, TensorR, TensorRInner, TermR, TermRInner}}, ket::KetState, phase::Phase};
 
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -285,4 +285,73 @@ impl TermT {
         }
     }
 }
+
+
+impl TermT {
+    /// Convert to a raw term.
+    pub fn to_raw(&self) -> TermR<()> {
+        let terms = if let TermT::Comp(terms) = self {
+            terms.iter().map(|t| t.to_raw_tensor()).collect()
+        } else {
+            vec![self.to_raw_tensor()]
+        };
+        TermRInner { terms }.into()
+    }
+
+    fn to_raw_tensor(&self) -> TensorR<()> {
+        let terms = if let TermT::Tensor(terms) = self {
+            terms.iter().map(|t| t.to_raw_atom()).collect()
+        } else {
+            vec![self.to_raw_atom()]
+        };
+        TensorRInner { terms }.into()
+    }
+
+    fn to_raw_atom(&self) -> AtomR<()> {
+        match self {
+            TermT::Id(ty) => AtomRInner::Id(ty.0),
+            TermT::Phase(phase) => AtomRInner::Phase(*phase),
+            TermT::IfLet { pattern, inner } => AtomRInner::IfLet {
+                pattern: pattern.to_raw(),
+                inner: Box::new(inner.to_raw_atom()),
+            },
+            TermT::Gate { name, .. } => AtomRInner::Gate(name.to_owned()),
+            TermT::Inverse(inner) => AtomRInner::Inverse(Box::new(inner.to_raw_atom())),
+            TermT::Sqrt(inner) => AtomRInner::Sqrt(Box::new(inner.to_raw_atom())),
+            t => AtomRInner::Brackets(t.to_raw()),
+        }
+        .into()
+    }
+}
+
+impl PatternT {
+    /// Convert to a raw pattern.
+    pub fn to_raw(&self) -> PatternR<()> {
+        let patterns = if let PatternT::Comp(patterns) = self {
+            patterns.iter().map(|t| t.to_raw_tensor()).collect()
+        } else {
+            vec![self.to_raw_tensor()]
+        };
+        PatternRInner { patterns }.into()
+    }
+
+    fn to_raw_tensor(&self) -> PatTensorR<()> {
+        let patterns = if let PatternT::Tensor(patterns) = self {
+            patterns.iter().map(|t| t.to_raw_atom()).collect()
+        } else {
+            vec![self.to_raw_atom()]
+        };
+        PatTensorRInner { patterns }.into()
+    }
+
+    fn to_raw_atom(&self) -> PatAtomR<()> {
+        match self {
+            PatternT::Ket(states) => PatAtomRInner::Ket(states.clone()),
+            PatternT::Unitary(inner) => PatAtomRInner::Unitary(Box::new(inner.to_raw())),
+            p => PatAtomRInner::Brackets(p.to_raw()),
+        }
+        .into()
+    }
+}
+
 

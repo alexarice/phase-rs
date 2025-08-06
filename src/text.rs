@@ -3,7 +3,7 @@
 use std::ops::Range;
 
 use pretty::RcDoc;
-use winnow::{LocatingSlice, Parser};
+use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, error::{StrContext, StrContextValue}, token::take_until, LocatingSlice, ModalResult, Parser};
 
 /// Trait for types which can be pretty-printed
 pub trait ToDoc {
@@ -44,3 +44,25 @@ impl<T> From<T> for Spanned<(), T> {
         }
     }
 }
+
+/// Parse a comment
+pub fn comment(input: &mut LocatingSlice<&str>) -> ModalResult<()> {
+    (
+        multispace0,
+        repeat::<_, _, (), _, _>(0.., ("//", take_until(0.., "\n"), multispace0).value(())),
+    )
+        .parse_next(input)?;
+    Ok(())
+}
+
+/// Parse an identifier
+pub fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
+    alphanumeric1
+        .map(|s: &str| s.to_owned())
+        .context(StrContext::Label("identifier"))
+        .context(StrContext::Expected(StrContextValue::Description(
+            "alphanumeric string",
+        )))
+        .parse_next(input)
+}
+
