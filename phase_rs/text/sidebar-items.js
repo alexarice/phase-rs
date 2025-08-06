@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["parse_spanned"],"struct":["Spanned"],"trait":["ToDoc"]};
+window.SIDEBAR_ITEMS = {"fn":["comment","identifier","parse_spanned"],"struct":["Spanned"],"trait":["ToDoc"]};
