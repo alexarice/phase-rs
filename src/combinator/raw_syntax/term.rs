@@ -1,17 +1,23 @@
 //! Raw syntax terms.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Range};
 
 use pretty::RcDoc;
+use winnow::{
+    LocatingSlice, ModalResult, Parser,
+    ascii::{dec_uint, multispace0, multispace1},
+    combinator::{alt, cut_err, delimited, opt, preceded, separated, seq},
+    error::{StrContext, StrContextValue},
+};
 
 use crate::{
     combinator::{
-        raw_syntax::PatternR,
+        raw_syntax::{PatternR, pattern::pattern},
         typecheck::{Env, TypeCheckError},
         typed_syntax::{TermT, TermType},
     },
-    phase::Phase,
-    text::{Spanned, ToDoc},
+    phase::{Phase, phase},
+    text::{Spanned, ToDoc, identifier, parse_spanned},
 };
 
 /// Raw syntax term with text span.
@@ -217,4 +223,61 @@ impl<S: Clone> AtomR<S> {
             }
         }
     }
+}
+
+/// Parser for terms.
+pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
+    parse_spanned(
+        separated(1.., tensor, (multispace0, ';', multispace0))
+            .context(StrContext::Label("term"))
+            .map(|terms| TermRInner { terms }),
+    )
+    .parse_next(input)
+}
+
+fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>> {
+    parse_spanned(
+        separated(1.., atom, (multispace0, 'x', multispace0))
+            .context(StrContext::Label("term"))
+            .map(|terms| TensorRInner { terms }),
+    )
+    .parse_next(input)
+}
+
+fn atom(input: &mut LocatingSlice<&str>) -> ModalResult<AtomR<Range<usize>>> {
+    parse_spanned((
+	alt((
+	    delimited(("(", multispace0),
+		      cut_err(tm),
+		      cut_err((multispace0, ")").context(StrContext::Expected(StrContextValue::CharLiteral(')')))))
+		.map(AtomRInner::Brackets),
+	    preceded(("sqrt", multispace0), cut_err(atom))
+		.map(|inner| AtomRInner::Sqrt(Box::new(inner))),
+	    preceded("id", opt(dec_uint))
+		.map(|qubits| AtomRInner::Id(qubits.unwrap_or(1))),
+	    preceded("if", cut_err(seq!(_: multispace1, _: "let".context(StrContext::Expected(StrContextValue::StringLiteral("let"))), _: multispace1, pattern, _: multispace1, _: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))), _: multispace1, atom)))
+	    .map(|(pattern, inner)| AtomRInner::IfLet{ pattern, inner: Box::new(inner) }),
+	    phase.map(AtomRInner::Phase),
+	    identifier.map(AtomRInner::Gate)
+	)).context(StrContext::Expected(StrContextValue::CharLiteral('(')))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("sqrt")))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("id")))
+	    .context(StrContext::Expected(StrContextValue::StringLiteral("if")))
+	    .context(StrContext::Expected(StrContextValue::CharLiteral('H')))
+	    .context(StrContext::Expected(StrContextValue::Description("identifier"))),
+	opt((
+	    multispace0,
+	    "^",
+	    multispace0,
+	    cut_err("-1").context(StrContext::Expected(StrContextValue::StringLiteral("-1"))),
+	)).context(StrContext::Label("term"))
+    )
+	.with_span()
+	.map(|((inner, invert), span)| {
+	    if invert.is_some() {
+		AtomRInner::Inverse ( Box::new(Spanned { inner, span }) )
+	    } else {
+		inner
+	    }}))
+	.parse_next(input)
 }

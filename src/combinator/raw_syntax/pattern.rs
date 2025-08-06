@@ -1,15 +1,22 @@
 //! Raw syntax patterns.
 
+use std::ops::Range;
+
 use pretty::RcDoc;
+use winnow::{
+    LocatingSlice, ModalResult, Parser,
+    ascii::multispace0,
+    combinator::{alt, delimited, separated},
+};
 
 use crate::{
     combinator::{
-        raw_syntax::TermR,
+        raw_syntax::{TermR, term::tm},
         typecheck::{Env, TypeCheckError},
         typed_syntax::PatternT,
     },
-    ket::KetState,
-    text::{Spanned, ToDoc},
+    ket::{KetState, ket},
+    text::{Spanned, ToDoc, parse_spanned},
 };
 
 /// Raw syntax pattern with text span.
@@ -133,4 +140,30 @@ impl<S: Clone> PatAtomR<S> {
             }
         }
     }
+}
+
+/// Parse a pattern
+pub fn pattern(input: &mut LocatingSlice<&str>) -> ModalResult<PatternR<Range<usize>>> {
+    parse_spanned(
+        separated(1.., pattern_tensor, (multispace0, '.', multispace0))
+            .map(|patterns| PatternRInner { patterns }),
+    )
+    .parse_next(input)
+}
+
+fn pattern_tensor(input: &mut LocatingSlice<&str>) -> ModalResult<PatTensorR<Range<usize>>> {
+    parse_spanned(
+        separated(1.., pattern_atom, (multispace0, 'x', multispace0))
+            .map(|patterns| PatTensorRInner { patterns }),
+    )
+    .parse_next(input)
+}
+
+fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
+    parse_spanned(alt((
+        delimited(("(", multispace0), pattern, (multispace0, ")")).map(PatAtomRInner::Brackets),
+        ket.map(PatAtomRInner::Ket),
+        tm.map(|x| PatAtomRInner::Unitary(Box::new(x))),
+    )))
+    .parse_next(input)
 }

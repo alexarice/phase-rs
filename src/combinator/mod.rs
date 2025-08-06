@@ -23,7 +23,6 @@
 pub mod circuit_syntax;
 pub mod command;
 pub mod normal_syntax;
-pub mod parsing;
 pub mod raw_syntax;
 pub mod typecheck;
 pub mod typed_syntax;

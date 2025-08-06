@@ -17,7 +17,7 @@ use super::{
     typed_syntax::TermT,
 };
 use crate::{
-    combinator::{parsing::tm, raw_syntax::TermR},
+    combinator::raw_syntax::{TermR, term::tm},
     text::{comment, identifier},
 };
 
