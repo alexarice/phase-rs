@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AtomN","PatternN","TermN"]};
+window.SIDEBAR_ITEMS = {"enum":["AtomN","PatternN","TermN"],"trait":["Buildable"]};
