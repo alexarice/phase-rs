@@ -9,14 +9,15 @@ use winnow::{
     error::{StrContext, StrContextValue},
 };
 
-use super::raw_syntax::{
-        AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
-        PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
-    };
+use super::raw_syntax::{PatternR, TermR};
 use crate::{
+    combinator::raw_syntax::{
+        pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
+        term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
+    },
     ket::ket,
     phase::phase,
-    text::{identifier, parse_spanned, Spanned},
+    text::{Spanned, identifier, parse_spanned},
 };
 
 /// Parser for terms.
@@ -101,4 +102,3 @@ fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<u
     )))
     .parse_next(input)
 }
-

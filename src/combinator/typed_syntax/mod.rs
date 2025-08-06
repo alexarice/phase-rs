@@ -6,7 +6,18 @@
 use std::iter::Sum;
 
 use super::normal_syntax::{AtomN, Buildable, PatternN};
-use crate::{combinator::{circuit_syntax::{ClauseC, PatternC, TermC}, raw_syntax::{AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR, PatternRInner, TensorR, TensorRInner, TermR, TermRInner}}, ket::KetState, phase::Phase};
+use crate::{
+    combinator::{
+        circuit_syntax::{ClauseC, PatternC, TermC},
+        raw_syntax::{
+            PatternR, TermR,
+            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
+            term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
+        },
+    },
+    ket::KetState,
+    phase::Phase,
+};
 
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -286,7 +297,6 @@ impl TermT {
     }
 }
 
-
 impl TermT {
     /// Convert to a raw term.
     pub fn to_raw(&self) -> TermR<()> {
@@ -353,5 +363,3 @@ impl PatternT {
         .into()
     }
 }
-
-

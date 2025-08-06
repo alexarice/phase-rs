@@ -3,10 +3,12 @@
 use std::collections::HashMap;
 
 use super::{
-    raw_syntax::{
-        AtomR, PatTensorR, PatternR, TensorR, TermR,
-    },
+    raw_syntax::{PatternR, TermR},
     typed_syntax::{PatternType, TermT, TermType},
+};
+use crate::combinator::raw_syntax::{
+    pattern::PatTensorR,
+    term::{AtomR, TensorR},
 };
 
 /// Errors that can occur during typechecking.

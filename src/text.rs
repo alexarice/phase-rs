@@ -3,7 +3,13 @@
 use std::ops::Range;
 
 use pretty::RcDoc;
-use winnow::{ascii::{alphanumeric1, multispace0}, combinator::repeat, error::{StrContext, StrContextValue}, token::take_until, LocatingSlice, ModalResult, Parser};
+use winnow::{
+    LocatingSlice, ModalResult, Parser,
+    ascii::{alphanumeric1, multispace0},
+    combinator::repeat,
+    error::{StrContext, StrContextValue},
+    token::take_until,
+};
 
 /// Trait for types which can be pretty-printed
 pub trait ToDoc {
@@ -65,4 +71,3 @@ pub fn identifier(input: &mut LocatingSlice<&str>) -> ModalResult<String> {
         )))
         .parse_next(input)
 }
-

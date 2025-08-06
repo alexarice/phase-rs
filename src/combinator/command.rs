@@ -5,13 +5,21 @@
 
 use std::ops::Range;
 
-use winnow::{ascii::{multispace0, multispace1}, combinator::{cut_err, preceded, repeat, seq, terminated}, error::{StrContext, StrContextValue}, LocatingSlice, ModalResult, Parser};
+use winnow::{
+    LocatingSlice, ModalResult, Parser,
+    ascii::{multispace0, multispace1},
+    combinator::{cut_err, preceded, repeat, seq, terminated},
+    error::{StrContext, StrContextValue},
+};
 
 use super::{
-    typed_syntax::TermT,
     typecheck::{Env, TypeCheckError},
+    typed_syntax::TermT,
 };
-use crate::{combinator::{parsing::tm, raw_syntax::TermR}, text::{comment, identifier}};
+use crate::{
+    combinator::{parsing::tm, raw_syntax::TermR},
+    text::{comment, identifier},
+};
 
 /// The Command structure: a runnable program.
 #[derive(Clone, Debug)]
@@ -54,4 +62,3 @@ pub fn command(input: &mut LocatingSlice<&str>) -> ModalResult<Command<Range<usi
     comment.parse_next(input)?;
     Ok(Command { gates, term })
 }
-
