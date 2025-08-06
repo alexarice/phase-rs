@@ -66,22 +66,22 @@
 <a href=#66 id=66 data-nosnippet>66</a><span class="kw">impl </span>CompKetState {
 <a href=#67 id=67 data-nosnippet>67</a>    <span class="doccomment">/// Get the number of qubits this state needs to be stored.
 <a href=#68 id=68 data-nosnippet>68</a>    </span><span class="kw">pub fn </span>qubits(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#69 id=69 data-nosnippet>69</a>	<span class="self">self</span>.<span class="number">0</span>.len()
+<a href=#69 id=69 data-nosnippet>69</a>        <span class="self">self</span>.<span class="number">0</span>.len()
 <a href=#70 id=70 data-nosnippet>70</a>    }
 <a href=#71 id=71 data-nosnippet>71</a>
 <a href=#72 id=72 data-nosnippet>72</a>    <span class="doccomment">/// An iterator over the individual states for each qubit.
 <a href=#73 id=73 data-nosnippet>73</a>    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>KetState&gt; {
-<a href=#74 id=74 data-nosnippet>74</a>	<span class="self">self</span>.<span class="number">0</span>.iter()
+<a href=#74 id=74 data-nosnippet>74</a>        <span class="self">self</span>.<span class="number">0</span>.iter()
 <a href=#75 id=75 data-nosnippet>75</a>    }
 <a href=#76 id=76 data-nosnippet>76</a>
 <a href=#77 id=77 data-nosnippet>77</a>    <span class="doccomment">/// Create a new composite ket state from a `Vec` of `KetState`
 <a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">pub fn </span>new(states: Vec&lt;KetState&gt;) -&gt; <span class="self">Self </span>{
-<a href=#79 id=79 data-nosnippet>79</a>	CompKetState(states)
+<a href=#79 id=79 data-nosnippet>79</a>        CompKetState(states)
 <a href=#80 id=80 data-nosnippet>80</a>    }
 <a href=#81 id=81 data-nosnippet>81</a>
 <a href=#82 id=82 data-nosnippet>82</a>    <span class="doccomment">/// Create a new composite ket state from a single `KetState`
 <a href=#83 id=83 data-nosnippet>83</a>    </span><span class="kw">pub fn </span>single(state: KetState) -&gt; <span class="self">Self </span>{
-<a href=#84 id=84 data-nosnippet>84</a>	CompKetState::new(<span class="macro">vec!</span>[state])
+<a href=#84 id=84 data-nosnippet>84</a>        CompKetState::new(<span class="macro">vec!</span>[state])
 <a href=#85 id=85 data-nosnippet>85</a>    }
 <a href=#86 id=86 data-nosnippet>86</a>}
 <a href=#87 id=87 data-nosnippet>87</a>
