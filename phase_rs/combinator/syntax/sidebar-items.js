@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["circuit_normal","normal","raw","typed"]};

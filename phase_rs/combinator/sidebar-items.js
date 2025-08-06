@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["command","eval_circ","parsing","syntax","typecheck"]};
+window.SIDEBAR_ITEMS = {"mod":["circuit_syntax","command","eval_circ","normal_syntax","parsing","raw_syntax","typecheck","typed_syntax"]};
