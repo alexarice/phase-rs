@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use winnow::{
     LocatingSlice, ModalResult, Parser,
-    ascii::{alphanumeric1, dec_uint, float, multispace0, multispace1},
+    ascii::{alphanumeric1, dec_uint, multispace0, multispace1},
     combinator::{alt, cut_err, delimited, opt, preceded, repeat, separated, seq, terminated},
     error::{StrContext, StrContextValue},
     token::take_until,
@@ -12,15 +12,16 @@ use winnow::{
 
 use super::{
     command::Command,
-    syntax::{
-        KetState, Phase,
-        raw::{
-            AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
-            PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
-        },
+    syntax::raw::{
+        AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
+        PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
     },
 };
-use crate::text::{Spanned, parse_spanned};
+use crate::{
+    ket::ket,
+    phase::phase,
+    text::{Spanned, parse_spanned},
+};
 
 /// Parser for terms.
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {
@@ -38,22 +39,6 @@ fn tensor(input: &mut LocatingSlice<&str>) -> ModalResult<TensorR<Range<usize>>>
             .context(StrContext::Label("term"))
             .map(|terms| TensorRInner { terms }),
     )
-    .parse_next(input)
-}
-
-/// Parser for phases.
-pub fn phase(input: &mut LocatingSlice<&str>) -> ModalResult<Phase> {
-    alt((
-        "-1".value(Phase::MinusOne),
-        "i".value(Phase::Imag),
-        "-i".value(Phase::MinusImag),
-        delimited(
-            ("ph(", multispace0),
-            float,
-            (multispace0, "pi", multispace0, ")"),
-        )
-        .map(Phase::Angle),
-    ))
     .parse_next(input)
 }
 
@@ -112,28 +97,10 @@ fn pattern_tensor(input: &mut LocatingSlice<&str>) -> ModalResult<PatTensorR<Ran
     .parse_next(input)
 }
 
-fn ket(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomRInner<Range<usize>>> {
-    delimited(
-        "|",
-        repeat(
-            1..,
-            alt((
-                "0".value(KetState::Zero),
-                "1".value(KetState::One),
-                "+".value(KetState::Plus),
-                "-".value(KetState::Minus),
-            )),
-        ),
-        ">",
-    )
-    .map(PatAtomRInner::Ket)
-    .parse_next(input)
-}
-
 fn pattern_atom(input: &mut LocatingSlice<&str>) -> ModalResult<PatAtomR<Range<usize>>> {
     parse_spanned(alt((
         delimited(("(", multispace0), pattern, (multispace0, ")")).map(PatAtomRInner::Brackets),
-        ket,
+        ket.map(PatAtomRInner::Ket),
         tm.map(|x| PatAtomRInner::Unitary(Box::new(x))),
     )))
     .parse_next(input)

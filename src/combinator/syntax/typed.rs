@@ -5,7 +5,7 @@
 
 use std::iter::Sum;
 
-use super::{KetState, Phase};
+use crate::{ket::KetState, phase::Phase};
 
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]

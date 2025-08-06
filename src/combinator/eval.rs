@@ -1,23 +1,10 @@
 //! Simple term evaluation, expanding and simplifying terms.
 
 use super::syntax::{
-    Phase,
     normal::{AtomN, PatternN, TermN},
     typed::{PatternT, PatternType, TermT, TermType},
 };
-
-impl Phase {
-    /// Returns the angle specified by this phase, divided by pi.
-    /// e.g. if `phase.eval() == 1.0` then `phase` represents the angle `pi`
-    pub fn eval(&self) -> f64 {
-        match self {
-            Phase::Angle(a) => *a,
-            Phase::MinusOne => 1.0,
-            Phase::Imag => 0.5,
-            Phase::MinusImag => 1.5,
-        }
-    }
-}
+use crate::phase::Phase;
 
 /// Trait for objects that can built with compositions, tensors, or from an `AtomN`.
 pub trait Buildable {

@@ -1,16 +1,11 @@
 //! Contains functions for converting normal-form syntax to matrices.
 
-use std::f64::consts::{FRAC_1_SQRT_2, PI};
+use std::f64::consts::PI;
 
 use faer::{Mat, mat};
 use num_complex::Complex;
 
-const CISQRT2: Complex<f64> = Complex::new(FRAC_1_SQRT_2, 0.0);
-
-use super::syntax::{
-    KetState,
-    normal::{AtomN, PatternN, TermN},
-};
+use super::syntax::normal::{AtomN, PatternN, TermN};
 
 impl TermN {
     /// Convert a normal-form term of type qn <-> qn to an n x n unitary matrix.
@@ -45,18 +40,6 @@ impl AtomN {
                 let u = inner.to_unitary();
                 proj + &inj * u * inj.adjoint()
             }
-        }
-    }
-}
-
-impl KetState {
-    /// Returns the vector this `KetState` represents.
-    pub fn to_state(self) -> Mat<Complex<f64>> {
-        match self {
-            KetState::Zero => mat![[Complex::ONE], [Complex::ZERO]],
-            KetState::One => mat![[Complex::ZERO], [Complex::ONE]],
-            KetState::Plus => mat![[CISQRT2], [CISQRT2]],
-            KetState::Minus => mat![[CISQRT2], [-CISQRT2]],
         }
     }
 }

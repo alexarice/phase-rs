@@ -7,8 +7,11 @@ use std::borrow::Cow;
 
 use pretty::RcDoc;
 
-use super::{KetState, Phase};
-use crate::{combinator::syntax::ToDoc, text::Spanned};
+use crate::{
+    ket::KetState,
+    phase::Phase,
+    text::{Spanned, ToDoc},
+};
 
 /// Raw syntax term with text span.
 /// Represents a list of tensored terms composed together.
@@ -179,10 +182,7 @@ impl<S> ToDoc for PatAtomRInner<S> {
                 .append(RcDoc::line())
                 .append(")")
                 .group(),
-            PatAtomRInner::Ket(states) => RcDoc::text(format!(
-                "|{}>",
-                states.iter().map(KetState::to_char).collect::<String>()
-            )),
+            PatAtomRInner::Ket(states) => states.to_doc(),
             PatAtomRInner::Unitary(inner) => inner.to_doc(),
         }
     }

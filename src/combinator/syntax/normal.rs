@@ -3,10 +3,8 @@
 //! Syntax for evaluated terms.
 //! This is assumed to be typechecked/well-formed.
 
-use super::{
-    KetState,
-    typed::{PatternType, TermType},
-};
+use super::typed::{PatternType, TermType};
+use crate::ket::KetState;
 
 /// A normal-form term
 #[derive(Clone, Debug, PartialEq)]
