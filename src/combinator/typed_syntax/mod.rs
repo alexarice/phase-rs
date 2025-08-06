@@ -10,11 +10,14 @@ use crate::{
     combinator::{
         circuit_syntax::{ClauseC, PatternC, TermC},
         raw_syntax::{
-            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner}, term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner}, PatternR, TermR
+            PatternR, TermR,
+            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
+            term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
         },
     },
     ket::CompKetState,
-    phase::Phase, text::Name,
+    phase::Phase,
+    text::Name,
 };
 
 /// A unitary type "qn <-> qn"

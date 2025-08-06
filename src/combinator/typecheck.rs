@@ -6,10 +6,13 @@ use super::{
     raw_syntax::{PatternR, TermR},
     typed_syntax::{PatternType, TermT, TermType},
 };
-use crate::{combinator::raw_syntax::{
-    pattern::PatTensorR,
-    term::{AtomR, TensorR},
-}, text::Name};
+use crate::{
+    combinator::raw_syntax::{
+        pattern::PatTensorR,
+        term::{AtomR, TensorR},
+    },
+    text::Name,
+};
 
 /// Errors that can occur during typechecking.
 #[derive(Debug, Clone)]

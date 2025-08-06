@@ -80,11 +80,11 @@ impl ToDoc for Name {
 impl HasParser for Name {
     fn parser(input: &mut LocatingSlice<&str>) -> ModalResult<Self> {
         alphanumeric1
-        .map(|s: &str| Name(s.to_owned()))
-        .context(StrContext::Label("identifier"))
-        .context(StrContext::Expected(StrContextValue::Description(
-            "alphanumeric string",
-        )))
-        .parse_next(input)
+            .map(|s: &str| Name(s.to_owned()))
+            .context(StrContext::Label("identifier"))
+            .context(StrContext::Expected(StrContextValue::Description(
+                "alphanumeric string",
+            )))
+            .parse_next(input)
     }
 }

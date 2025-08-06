@@ -21,7 +21,7 @@
 #![warn(missing_docs)]
 
 pub mod combinator;
-pub mod mvs;
 pub mod ket;
+pub mod mvs;
 pub mod phase;
 pub mod text;

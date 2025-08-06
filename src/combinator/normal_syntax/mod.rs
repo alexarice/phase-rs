@@ -9,7 +9,10 @@ use faer::{Mat, mat};
 use num_complex::Complex;
 
 use super::typed_syntax::{PatternT, PatternType, TermT, TermType};
-use crate::{ket::{CompKetState, KetState}, phase::Phase};
+use crate::{
+    ket::{CompKetState, KetState},
+    phase::Phase,
+};
 
 /// A normal-form term
 #[derive(Clone, Debug, PartialEq)]

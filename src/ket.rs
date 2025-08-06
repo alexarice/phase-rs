@@ -66,22 +66,22 @@ pub struct CompKetState(Vec<KetState>);
 impl CompKetState {
     /// Get the number of qubits this state needs to be stored.
     pub fn qubits(&self) -> usize {
-	self.0.len()
+        self.0.len()
     }
 
     /// An iterator over the individual states for each qubit.
     pub fn iter(&self) -> impl Iterator<Item = &KetState> {
-	self.0.iter()
+        self.0.iter()
     }
 
     /// Create a new composite ket state from a `Vec` of `KetState`
     pub fn new(states: Vec<KetState>) -> Self {
-	CompKetState(states)
+        CompKetState(states)
     }
 
     /// Create a new composite ket state from a single `KetState`
     pub fn single(state: KetState) -> Self {
-	CompKetState::new(vec![state])
+        CompKetState::new(vec![state])
     }
 }
 

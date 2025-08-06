@@ -52,11 +52,13 @@ impl HasParser for Command<Range<usize>> {
 		     _: (multispace0, "=", multispace0).context(StrContext::Expected(StrContextValue::CharLiteral('='))),
 		     TermR::parser,
 		     _: (multispace0, ","))).context(StrContext::Label("gate definition"))
-    );
+	);
 
         comment_parser.parse_next(input)?;
         let gates = repeat(0.., terminated(gate, comment_parser)).parse_next(input)?;
-        let term = TermR::parser.context(StrContext::Label("Term")).parse_next(input)?;
+        let term = TermR::parser
+            .context(StrContext::Label("Term"))
+            .parse_next(input)?;
         comment_parser.parse_next(input)?;
         Ok(Command { gates, term })
     }
