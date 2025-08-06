@@ -23,5 +23,8 @@
 pub mod command;
 pub mod eval_circ;
 pub mod parsing;
-pub mod syntax;
+pub mod raw_syntax;
+pub mod typed_syntax;
+pub mod normal_syntax;
+pub mod circuit_syntax;
 pub mod typecheck;

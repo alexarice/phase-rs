@@ -5,7 +5,8 @@
 
 use std::iter::Sum;
 
-use crate::{combinator::syntax::normal::{AtomN, Buildable, PatternN}, ket::KetState, phase::Phase};
+use super::normal_syntax::{AtomN, Buildable, PatternN};
+use crate::{ket::KetState, phase::Phase};
 
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -139,7 +140,6 @@ impl PatternT {
     }
 }
 
-
 impl TermT {
     /// Evaluate a term to a given `Buildable` type, expanding top level definitions
     /// and evaluating inverse and sqrt macros.
@@ -180,4 +180,3 @@ impl TermT {
         }
     }
 }
-

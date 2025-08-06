@@ -2,12 +2,12 @@
 
 use std::collections::HashMap;
 
-use super::syntax::{
-    raw::{
+use super::{
+    raw_syntax::{
         AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
         PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
     },
-    typed::{PatternT, PatternType, TermT, TermType},
+    typed_syntax::{PatternT, PatternType, TermT, TermType},
 };
 
 /// Errors that can occur during typechecking.

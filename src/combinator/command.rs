@@ -4,10 +4,10 @@
 //! They allow a sequence of gates to be defined before taking a term to evaluate.
 
 use super::{
-    syntax::typed::TermT,
+    typed_syntax::TermT,
     typecheck::{Env, TypeCheckError},
 };
-use crate::combinator::syntax::raw::TermR;
+use crate::combinator::raw_syntax::TermR;
 
 /// The Command structure: a runnable program.
 #[derive(Clone, Debug)]

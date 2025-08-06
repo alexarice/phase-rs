@@ -3,15 +3,13 @@
 //! Syntax for evaluated terms.
 //! This is assumed to be typechecked/well-formed.
 
-use super::typed::{PatternType, TermType};
-use crate::{combinator::syntax::typed::{PatternT, TermT}, ket::KetState, phase::Phase};
-
 use std::f64::consts::PI;
 
 use faer::{Mat, mat};
 use num_complex::Complex;
 
-
+use super::typed_syntax::{PatternT, PatternType, TermT, TermType};
+use crate::{ket::KetState, phase::Phase};
 
 /// A normal-form term
 #[derive(Clone, Debug, PartialEq)]
@@ -132,7 +130,6 @@ impl PatternN {
         }
     }
 }
-
 
 impl TermN {
     /// Return a `TermT` which is the "quotation" of this normal-form term.

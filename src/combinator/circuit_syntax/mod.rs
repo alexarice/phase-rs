@@ -2,7 +2,7 @@
 //!
 //! Circuit-normal syntax is designed to allow extraction to Hadamard/Controlled phase circuits.
 
-use super::typed::{PatternT, TermT, TermType};
+use super::typed_syntax::{PatternT, TermT, TermType};
 use crate::{ket::KetState, phase::Phase};
 
 /// Circuit-normal terms.

@@ -12,7 +12,7 @@ use winnow::{
 
 use super::{
     command::Command,
-    syntax::raw::{
+    raw_syntax::{
         AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
         PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
     },

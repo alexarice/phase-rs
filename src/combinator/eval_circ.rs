@@ -1,8 +1,8 @@
 //! Evaluation to circuit normal form, for extracting quantum circuits.
 
-use super::syntax::{
-    circuit_normal::{ClauseC, PatternC, TermC},
-    typed::{PatternT, TermT},
+use super::{
+    circuit_syntax::{ClauseC, PatternC, TermC},
+    typed_syntax::{PatternT, TermT},
 };
 
 impl TermT {
