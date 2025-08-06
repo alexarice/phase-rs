@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {};
+window.SIDEBAR_ITEMS = {"enum":["ClauseRInner","ExprRInner","TypeRInner"],"struct":["ParamRInner","TermRInner"],"type":["ClauseR","ExprR","ParamR","TermR","TypeR"]};
