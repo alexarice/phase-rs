@@ -21,3 +21,4 @@
 #![warn(missing_docs)]
 
 pub mod combinator;
+pub mod text;

@@ -16,10 +16,11 @@ use super::{
         KetState, Phase,
         raw::{
             AtomR, AtomRInner, PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternR,
-            PatternRInner, Spanned, TensorR, TensorRInner, TermR, TermRInner, parse_spanned,
+            PatternRInner, TensorR, TensorRInner, TermR, TermRInner,
         },
     },
 };
+use crate::text::{Spanned, parse_spanned};
 
 /// Parser for terms.
 pub fn tm(input: &mut LocatingSlice<&str>) -> ModalResult<TermR<Range<usize>>> {

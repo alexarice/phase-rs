@@ -2,16 +2,12 @@
 
 use pretty::RcDoc;
 
+use crate::text::ToDoc;
+
 pub mod circuit_normal;
 pub mod normal;
 pub mod raw;
 pub mod typed;
-
-/// Trait for types which can be pretty-printed
-pub trait ToDoc {
-    /// Produce an `RcDoc` for pretty-printing.
-    fn to_doc(&self) -> RcDoc;
-}
 
 /// Holds the value of a ket pattern.
 #[derive(Clone, Copy, Debug, PartialEq)]
