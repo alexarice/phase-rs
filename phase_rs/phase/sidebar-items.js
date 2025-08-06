@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Phase"],"fn":["phase"]};
+window.SIDEBAR_ITEMS = {"enum":["Phase"]};

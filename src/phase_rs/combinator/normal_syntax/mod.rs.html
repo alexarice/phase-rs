@@ -9,7 +9,7 @@
 <a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span>num_complex::Complex;
 <a href=#10 id=10 data-nosnippet>10</a>
 <a href=#11 id=11 data-nosnippet>11</a><span class="kw">use </span><span class="kw">super</span>::typed_syntax::{PatternT, PatternType, TermT, TermType};
-<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use crate</span>::{ket::KetState, phase::Phase};
+<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use crate</span>::{ket::{CompKetState, KetState}, phase::Phase};
 <a href=#13 id=13 data-nosnippet>13</a>
 <a href=#14 id=14 data-nosnippet>14</a><span class="doccomment">/// A normal-form term
 <a href=#15 id=15 data-nosnippet>15</a></span><span class="attr">#[derive(Clone, Debug, PartialEq)]
@@ -230,7 +230,7 @@
 <a href=#230 id=230 data-nosnippet>230</a>            PatternN::Tensor(patterns) =&gt; {
 <a href=#231 id=231 data-nosnippet>231</a>                PatternT::Tensor(patterns.iter().map(PatternN::quote).collect())
 <a href=#232 id=232 data-nosnippet>232</a>            }
-<a href=#233 id=233 data-nosnippet>233</a>            PatternN::Ket(state) =&gt; PatternT::Ket(<span class="macro">vec!</span>[<span class="kw-2">*</span>state]),
+<a href=#233 id=233 data-nosnippet>233</a>            PatternN::Ket(state) =&gt; PatternT::Ket(CompKetState::single(<span class="kw-2">*</span>state)),
 <a href=#234 id=234 data-nosnippet>234</a>            PatternN::Unitary(inner) =&gt; PatternT::Unitary(Box::new(inner.quote())),
 <a href=#235 id=235 data-nosnippet>235</a>        }
 <a href=#236 id=236 data-nosnippet>236</a>    }

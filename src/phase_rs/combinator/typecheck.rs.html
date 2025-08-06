@@ -6,10 +6,10 @@
 <a href=#6 id=6 data-nosnippet>6</a>    raw_syntax::{PatternR, TermR},
 <a href=#7 id=7 data-nosnippet>7</a>    typed_syntax::{PatternType, TermT, TermType},
 <a href=#8 id=8 data-nosnippet>8</a>};
-<a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span><span class="kw">crate</span>::combinator::raw_syntax::{
+<a href=#9 id=9 data-nosnippet>9</a><span class="kw">use crate</span>::{combinator::raw_syntax::{
 <a href=#10 id=10 data-nosnippet>10</a>    pattern::PatTensorR,
 <a href=#11 id=11 data-nosnippet>11</a>    term::{AtomR, TensorR},
-<a href=#12 id=12 data-nosnippet>12</a>};
+<a href=#12 id=12 data-nosnippet>12</a>}, text::Name};
 <a href=#13 id=13 data-nosnippet>13</a>
 <a href=#14 id=14 data-nosnippet>14</a><span class="doccomment">/// Errors that can occur during typechecking.
 <a href=#15 id=15 data-nosnippet>15</a></span><span class="attr">#[derive(Debug, Clone)]
@@ -50,7 +50,7 @@
 <a href=#50 id=50 data-nosnippet>50</a>    <span class="doccomment">/// Error for an unknown top-level symbol.
 <a href=#51 id=51 data-nosnippet>51</a>    </span>UnknownSymbol {
 <a href=#52 id=52 data-nosnippet>52</a>        <span class="doccomment">/// The unknown symbol encountered
-<a href=#53 id=53 data-nosnippet>53</a>        </span>name: String,
+<a href=#53 id=53 data-nosnippet>53</a>        </span>name: Name,
 <a href=#54 id=54 data-nosnippet>54</a>        <span class="doccomment">/// Span of symbol
 <a href=#55 id=55 data-nosnippet>55</a>        </span>span: S,
 <a href=#56 id=56 data-nosnippet>56</a>    },
@@ -65,4 +65,4 @@
 <a href=#65 id=65 data-nosnippet>65</a>
 <a href=#66 id=66 data-nosnippet>66</a><span class="doccomment">/// Typing enviroment, holding definitions of top level symbols.
 <a href=#67 id=67 data-nosnippet>67</a></span><span class="attr">#[derive(Default)]
-<a href=#68 id=68 data-nosnippet>68</a></span><span class="kw">pub struct </span>Env(<span class="kw">pub</span>(<span class="kw">crate</span>) HashMap&lt;String, TermT&gt;);</code></pre></div></section></main></body></html>
+<a href=#68 id=68 data-nosnippet>68</a></span><span class="kw">pub struct </span>Env(<span class="kw">pub</span>(<span class="kw">crate</span>) HashMap&lt;Name, TermT&gt;);</code></pre></div></section></main></body></html>

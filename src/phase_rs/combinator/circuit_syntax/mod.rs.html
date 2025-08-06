@@ -3,7 +3,7 @@
 <a href=#3 id=3 data-nosnippet>3</a>//! Circuit-normal syntax is designed to allow extraction to Hadamard/Controlled phase circuits.
 <a href=#4 id=4 data-nosnippet>4</a>
 <a href=#5 id=5 data-nosnippet>5</a></span><span class="kw">use </span><span class="kw">super</span>::typed_syntax::{PatternT, TermT, TermType};
-<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use crate</span>::{ket::KetState, phase::Phase};
+<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use crate</span>::{ket::{CompKetState, KetState}, phase::Phase};
 <a href=#7 id=7 data-nosnippet>7</a>
 <a href=#8 id=8 data-nosnippet>8</a><span class="doccomment">/// Circuit-normal terms.
 <a href=#9 id=9 data-nosnippet>9</a>///
@@ -65,7 +65,7 @@
 <a href=#65 id=65 data-nosnippet>65</a><span class="kw">fn </span>state_to_pattern(s: <span class="prelude-ty">Option</span>&lt;KetState&gt;) -&gt; PatternT {
 <a href=#66 id=66 data-nosnippet>66</a>    s.map_or(
 <a href=#67 id=67 data-nosnippet>67</a>        PatternT::Unitary(Box::new(TermT::Id(TermType(<span class="number">1</span>)))),
-<a href=#68 id=68 data-nosnippet>68</a>        |state| PatternT::Ket(<span class="macro">vec!</span>[state]),
+<a href=#68 id=68 data-nosnippet>68</a>        |state| PatternT::Ket(CompKetState::single(state))
 <a href=#69 id=69 data-nosnippet>69</a>    )
 <a href=#70 id=70 data-nosnippet>70</a>}
 <a href=#71 id=71 data-nosnippet>71</a>

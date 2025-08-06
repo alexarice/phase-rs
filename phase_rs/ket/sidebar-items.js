@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["KetState"],"fn":["ket"]};
+window.SIDEBAR_ITEMS = {"enum":["KetState"],"struct":["CompKetState"]};

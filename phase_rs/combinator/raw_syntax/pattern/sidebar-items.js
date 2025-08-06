@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["PatAtomRInner"],"fn":["pattern"],"struct":["PatTensorRInner","PatternRInner"],"type":["PatAtomR","PatTensorR","PatternR"]};
+window.SIDEBAR_ITEMS = {"enum":["PatAtomRInner"],"struct":["PatTensorRInner","PatternRInner"],"type":["PatAtomR","PatTensorR","PatternR"]};
