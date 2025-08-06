@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["KetState","Phase"],"mod":["circuit_normal","normal","raw","typed"],"trait":["ToDoc"]};
+window.SIDEBAR_ITEMS = {"enum":["KetState","Phase"],"mod":["circuit_normal","normal","raw","typed"]};
