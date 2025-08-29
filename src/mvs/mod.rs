@@ -20,4 +20,7 @@
 //! }
 //! ```
 
+pub mod common;
 pub mod raw_syntax;
+pub mod typecheck;
+pub mod typed_syntax;

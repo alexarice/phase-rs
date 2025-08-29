@@ -18,7 +18,7 @@
 //! cargo run -- --help
 //! ```
 
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 
 pub mod combinator;
 pub mod ket;
