@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["raw_syntax"]};
+window.SIDEBAR_ITEMS = {"mod":["common","raw_syntax","typecheck","typed_syntax"]};

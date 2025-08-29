@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["extra","generic","mapping","union"],"type":["BTreeUnionFind","BTreeUnionFindByRank","HashUnionFind","HashUnionFindByRank","VecUnionFind","VecUnionFindByRank"]};

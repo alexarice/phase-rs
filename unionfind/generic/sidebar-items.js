@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AddError","NewUnionFindError","UnionByRankError","UnionError","UnionOrAddError","UnionStatus"],"struct":["UnionFind"]};
