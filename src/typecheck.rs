@@ -2,16 +2,14 @@
 
 use std::collections::HashMap;
 
-use super::{
-    raw_syntax::{PatternR, TermR},
-    typed_syntax::{PatternType, TermT, TermType},
-};
 use crate::{
-    combinator::raw_syntax::{
+    raw_syntax::{
+        PatternR, TermR,
         pattern::PatTensorR,
         term::{AtomR, TensorR},
     },
     text::Name,
+    typed_syntax::{PatternType, TermT, TermType},
 };
 
 /// Errors that can occur during typechecking.

@@ -12,13 +12,11 @@ use winnow::{
     error::{StrContext, StrContextValue},
 };
 
-use super::{
+use crate::{
+    raw_syntax::TermR,
+    text::{HasParser, Name, comment_parser},
     typecheck::{Env, TypeCheckError},
     typed_syntax::TermT,
-};
-use crate::{
-    combinator::raw_syntax::TermR,
-    text::{HasParser, Name, comment_parser},
 };
 
 /// The Command structure: a runnable program.

@@ -2,7 +2,8 @@ use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
 use phase_rs::{
-    combinator::{command::Command, normal_syntax::TermN},
+    command::Command,
+    normal_syntax::TermN,
     text::{HasParser, ToDoc},
 };
 use winnow::{LocatingSlice, Parser};

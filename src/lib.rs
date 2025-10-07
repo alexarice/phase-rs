@@ -20,8 +20,12 @@
 
 // #![warn(missing_docs)]
 
-pub mod combinator;
+pub mod circuit_syntax;
+pub mod command;
 pub mod ket;
-pub mod mvs;
+pub mod normal_syntax;
 pub mod phase;
+pub mod raw_syntax;
 pub mod text;
+pub mod typecheck;
+pub mod typed_syntax;

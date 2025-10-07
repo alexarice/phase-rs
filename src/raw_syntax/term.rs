@@ -11,13 +11,11 @@ use winnow::{
 };
 
 use crate::{
-    combinator::{
-        raw_syntax::PatternR,
-        typecheck::{Env, TypeCheckError},
-        typed_syntax::{TermT, TermType},
-    },
     phase::Phase,
+    raw_syntax::PatternR,
     text::{HasParser, Name, Spanned, ToDoc},
+    typecheck::{Env, TypeCheckError},
+    typed_syntax::{TermT, TermType},
 };
 
 /// Raw syntax term with text span.

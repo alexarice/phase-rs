@@ -5,18 +5,16 @@
 
 use std::iter::Sum;
 
-use super::normal_syntax::{AtomN, Buildable, PatternN};
 use crate::{
-    combinator::{
-        circuit_syntax::{ClauseC, PatternC, TermC},
-        raw_syntax::{
-            PatternR, TermR,
-            pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
-            term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
-        },
-    },
+    circuit_syntax::{ClauseC, PatternC, TermC},
     ket::CompKetState,
+    normal_syntax::{AtomN, Buildable, PatternN},
     phase::Phase,
+    raw_syntax::{
+        PatternR, TermR,
+        pattern::{PatAtomR, PatAtomRInner, PatTensorR, PatTensorRInner, PatternRInner},
+        term::{AtomR, AtomRInner, TensorR, TensorRInner, TermRInner},
+    },
     text::Name,
 };
 
