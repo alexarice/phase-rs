@@ -20,6 +20,12 @@ or passed in through stdin. For all options see:
 cargo run -- --help
 ```
 
+Code documentation can be built by running:
+```bash
+cargo doc
+```
+and found (after building) at [target/doc/phase_rs/index.html](target/doc/phase_rs/index.html).
+
 ## Examples
 
 Examples of common gates (and of the syntax) can be found in [examples/gates.ph](examples/gates.ph).
