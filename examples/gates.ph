@@ -13,4 +13,4 @@ gate Toff = if let |1> x id2 then CX,
 gate XC = if let |-1> then -1,
 gate Swap = if let CX then XC,
 
-if let S . |+> then -1
+Swap

@@ -28,4 +28,7 @@ and found (after building) at [target/doc/phase_rs/index.html](target/doc/phase_
 
 ## Examples
 
-Examples of common gates (and of the syntax) can be found in [examples/gates.ph](examples/gates.ph).
+Examples of common gates (and of the syntax) can be found in [examples/gates.ph](examples/gates.ph). To view the generated terms and unitaries for each of these gates, edit the final term to the name of a different gate, and rerun:
+```bash
+cargo run -- --file examples/gates.ph
+```
