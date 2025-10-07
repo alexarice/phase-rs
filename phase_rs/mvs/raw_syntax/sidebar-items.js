@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CopatternRInner","ExprRInner","PatternClauseRInner","TypeRInner","UnitaryClauseRInner","UnitaryRInner"],"struct":["ParamRInner","PatternRInner"],"type":["CopatternR","ExprR","ParamR","PatternClauseR","PatternR","TypeR","UnitaryClauseR","UnitaryR"]};

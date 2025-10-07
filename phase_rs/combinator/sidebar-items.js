@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["circuit_syntax","command","normal_syntax","raw_syntax","typecheck","typed_syntax"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TypeCheckError"],"struct":["Ctx","Env","Support","SupportAtom"],"type":["TCResult"]};

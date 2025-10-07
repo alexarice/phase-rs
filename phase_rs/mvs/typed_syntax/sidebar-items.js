@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CopatternT","ExprT","PatternClauseT","UnitaryClauseT","UnitaryT"],"struct":["MetaId","PatternT","TypeEnv","TypeT","UnitaryTypeT"]};

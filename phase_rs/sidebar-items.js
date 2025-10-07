@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["combinator","ket","mvs","phase","text"]};
+window.SIDEBAR_ITEMS = {"mod":["circuit_syntax","command","ket","normal_syntax","phase","raw_syntax","text","typecheck","typed_syntax"]};
