@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["comment_parser"],"struct":["Name","Spanned"],"trait":["HasParser","ToDoc"]};
+window.SIDEBAR_ITEMS = {"fn":["comment_parser"],"struct":["Name","NoSpan","Spanned"],"trait":["HasParser","Span","ToDoc"]};

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("backtrace_ext", 0, "Minor conveniences on top of the backtrace crate\nGets an iterator over the frames that are part of Rust’s …")

@@ -13,7 +13,7 @@
 <a href=#13 id=13 data-nosnippet>13</a><span class="kw">use crate</span>::{
 <a href=#14 id=14 data-nosnippet>14</a>    phase::Phase,
 <a href=#15 id=15 data-nosnippet>15</a>    raw_syntax::PatternR,
-<a href=#16 id=16 data-nosnippet>16</a>    text::{HasParser, Name, Spanned, ToDoc},
+<a href=#16 id=16 data-nosnippet>16</a>    text::{HasParser, Name, Span, Spanned, ToDoc},
 <a href=#17 id=17 data-nosnippet>17</a>    typecheck::{Env, TypeCheckError},
 <a href=#18 id=18 data-nosnippet>18</a>    typed_syntax::{TermT, TermType},
 <a href=#19 id=19 data-nosnippet>19</a>};
@@ -121,7 +121,7 @@
 <a href=#121 id=121 data-nosnippet>121</a>    }
 <a href=#122 id=122 data-nosnippet>122</a>}
 <a href=#123 id=123 data-nosnippet>123</a>
-<a href=#124 id=124 data-nosnippet>124</a><span class="kw">impl</span>&lt;S: Clone&gt; TermR&lt;S&gt; {
+<a href=#124 id=124 data-nosnippet>124</a><span class="kw">impl</span>&lt;S: Span&gt; TermR&lt;S&gt; {
 <a href=#125 id=125 data-nosnippet>125</a>    <span class="doccomment">/// Typecheck a raw term in given environment
 <a href=#126 id=126 data-nosnippet>126</a>    /// If `check_sqrt` is not `None`, then checks that the term is "composition free"
 <a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env, check_sqrt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TermT, TypeCheckError&lt;S&gt;&gt; {
@@ -156,7 +156,7 @@
 <a href=#156 id=156 data-nosnippet>156</a>    }
 <a href=#157 id=157 data-nosnippet>157</a>}
 <a href=#158 id=158 data-nosnippet>158</a>
-<a href=#159 id=159 data-nosnippet>159</a><span class="kw">impl</span>&lt;S: Clone&gt; TensorR&lt;S&gt; {
+<a href=#159 id=159 data-nosnippet>159</a><span class="kw">impl</span>&lt;S: Span&gt; TensorR&lt;S&gt; {
 <a href=#160 id=160 data-nosnippet>160</a>    <span class="kw">fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env, check_sqrt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TermT, TypeCheckError&lt;S&gt;&gt; {
 <a href=#161 id=161 data-nosnippet>161</a>        <span class="prelude-val">Ok</span>(TermT::Tensor(
 <a href=#162 id=162 data-nosnippet>162</a>            <span class="self">self</span>.inner
@@ -168,7 +168,7 @@
 <a href=#168 id=168 data-nosnippet>168</a>    }
 <a href=#169 id=169 data-nosnippet>169</a>}
 <a href=#170 id=170 data-nosnippet>170</a>
-<a href=#171 id=171 data-nosnippet>171</a><span class="kw">impl</span>&lt;S: Clone&gt; AtomR&lt;S&gt; {
+<a href=#171 id=171 data-nosnippet>171</a><span class="kw">impl</span>&lt;S: Span&gt; AtomR&lt;S&gt; {
 <a href=#172 id=172 data-nosnippet>172</a>    <span class="kw">fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env, check_sqrt: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>S&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TermT, TypeCheckError&lt;S&gt;&gt; {
 <a href=#173 id=173 data-nosnippet>173</a>        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner {
 <a href=#174 id=174 data-nosnippet>174</a>            AtomRInner::Brackets(term) =&gt; term.check(env, check_sqrt),

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("supports_unicode", 0, "Detects whether a terminal supports unicode.\npossible stream sources\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nReturns true if <code>stream</code> is a TTY or the current terminal …\nReturns true if the current terminal, detected through …")
