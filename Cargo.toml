@@ -4,12 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.98"
 clap = { version = "4.5.38", features = ["derive"] }
 faer = "0.22.6"
 float-pretty-print = "0.1.1"
 indexmap = "2.10.0"
+miette = { version = "7.6.0", features = ["fancy"] }
 num-complex = "0.4.6"
 pretty = "0.12.4"
+thiserror = "2.0.17"
 unionfind = "0.2.1"
 winnow = "0.7.10"

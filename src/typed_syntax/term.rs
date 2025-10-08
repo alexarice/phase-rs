@@ -1,6 +1,6 @@
 //! Term syntax terms.
 
-use std::iter::Sum;
+use std::{fmt::Display, iter::Sum};
 
 use crate::{
     circuit_syntax::{TermC, pattern::PatternC, term::ClauseC},
@@ -17,6 +17,12 @@ use crate::{
 /// A unitary type "qn <-> qn"
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TermType(pub usize);
+
+impl Display for TermType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "q{}", self.0)
+    }
+}
 
 impl Sum for TermType {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {

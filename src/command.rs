@@ -14,7 +14,7 @@ use winnow::{
 
 use crate::{
     raw_syntax::TermR,
-    text::{HasParser, Name, comment_parser},
+    text::{HasParser, Name, Span, comment_parser},
     typecheck::{Env, TypeCheckError},
     typed_syntax::TermT,
 };
@@ -28,7 +28,7 @@ pub struct Command<S> {
     pub term: TermR<S>,
 }
 
-impl<S: Clone> Command<S> {
+impl<S: Span> Command<S> {
     /// Typecheck a command, building an `Env` with gate definitions.
     pub fn check(&self) -> Result<(Env, TermT), TypeCheckError<S>> {
         let mut env = Env::default();

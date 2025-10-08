@@ -1,6 +1,7 @@
 use std::{io, io::Read, path::PathBuf};
 
 use float_pretty_print::PrettyPrintFloat;
+use miette::{Result, miette};
 use phase_rs::{
     command::Command,
     normal_syntax::TermN,
@@ -16,11 +17,11 @@ struct Args {
     file: Option<PathBuf>,
 }
 
-fn parse_and_check(src: &str) -> anyhow::Result<()> {
+fn parse_and_check(src: &str) -> Result<()> {
     let parsed = Command::parser
         .parse(LocatingSlice::new(src))
-        .map_err(|e| anyhow::format_err!("{e}"))?;
-    let (_env, checked) = parsed.check().map_err(|e| anyhow::format_err!("{e:?}"))?;
+        .map_err(|e| miette!("{e}"))?;
+    let (_env, checked) = parsed.check()?;
     println!("Input term:\n{}\n", checked.to_raw().to_doc().pretty(60));
     let mut evalled: TermN = checked.eval();
     evalled.squash();
@@ -54,7 +55,7 @@ fn parse_and_check(src: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args: Args = clap::Parser::parse();
 
     let src = if let Some(path) = &args.file {
@@ -65,7 +66,7 @@ fn main() {
         s
     };
 
-    if let Err(e) = parse_and_check(&src) {
-        eprintln!("{e}")
-    }
+    parse_and_check(&src).map_err(|e| e.with_source_code(src))?;
+
+    Ok(())
 }

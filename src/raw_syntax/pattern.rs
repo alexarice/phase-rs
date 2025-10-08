@@ -12,7 +12,7 @@ use winnow::{
 use crate::{
     ket::CompKetState,
     raw_syntax::TermR,
-    text::{HasParser, Spanned, ToDoc},
+    text::{HasParser, Span, Spanned, ToDoc},
     typecheck::{Env, TypeCheckError},
     typed_syntax::PatternT,
 };
@@ -89,7 +89,7 @@ impl<S> ToDoc for PatAtomRInner<S> {
     }
 }
 
-impl<S: Clone> PatternR<S> {
+impl<S: Span> PatternR<S> {
     /// Typecheck a raw pattern in given environment
     pub fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         let mut pattern_iter = self.inner.patterns.iter();
@@ -116,7 +116,7 @@ impl<S: Clone> PatternR<S> {
     }
 }
 
-impl<S: Clone> PatTensorR<S> {
+impl<S: Span> PatTensorR<S> {
     fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         Ok(PatternT::Tensor(
             self.inner
@@ -128,7 +128,7 @@ impl<S: Clone> PatTensorR<S> {
     }
 }
 
-impl<S: Clone> PatAtomR<S> {
+impl<S: Span> PatAtomR<S> {
     fn check(&self, env: &Env) -> Result<PatternT, TypeCheckError<S>> {
         match &self.inner {
             PatAtomRInner::Brackets(pattern) => pattern.check(env),

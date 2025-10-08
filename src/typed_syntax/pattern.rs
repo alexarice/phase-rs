@@ -1,6 +1,6 @@
 //! Term syntax patterns.
 
-use std::iter::Sum;
+use std::{fmt::Display, iter::Sum};
 
 use crate::{
     circuit_syntax::{pattern::PatternC, term::ClauseC},
@@ -22,6 +22,12 @@ impl Sum for PatternType {
         iter.fold(PatternType(0, 0), |PatternType(a, b), PatternType(c, d)| {
             PatternType(a + c, b + d)
         })
+    }
+}
+
+impl Display for PatternType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "q{} -> q{}", self.1, self.0)
     }
 }
 

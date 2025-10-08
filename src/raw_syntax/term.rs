@@ -13,7 +13,7 @@ use winnow::{
 use crate::{
     phase::Phase,
     raw_syntax::PatternR,
-    text::{HasParser, Name, Spanned, ToDoc},
+    text::{HasParser, Name, Span, Spanned, ToDoc},
     typecheck::{Env, TypeCheckError},
     typed_syntax::{TermT, TermType},
 };
@@ -121,7 +121,7 @@ impl<S> ToDoc for AtomRInner<S> {
     }
 }
 
-impl<S: Clone> TermR<S> {
+impl<S: Span> TermR<S> {
     /// Typecheck a raw term in given environment
     /// If `check_sqrt` is not `None`, then checks that the term is "composition free"
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
@@ -156,7 +156,7 @@ impl<S: Clone> TermR<S> {
     }
 }
 
-impl<S: Clone> TensorR<S> {
+impl<S: Span> TensorR<S> {
     fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         Ok(TermT::Tensor(
             self.inner
@@ -168,7 +168,7 @@ impl<S: Clone> TensorR<S> {
     }
 }
 
-impl<S: Clone> AtomR<S> {
+impl<S: Span> AtomR<S> {
     fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
         match &self.inner {
             AtomRInner::Brackets(term) => term.check(env, check_sqrt),
