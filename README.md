@@ -7,6 +7,11 @@ Given an input program, the interpreter:
 - compiles the term to a circuit definition.
 - Builds the unitary for the output.
 
+## Building
+
+The project should build with a standard rust installation, and is tested with rustc/cargo 1.88.0.
+These can be installed by a tool such as [rustup](https://rustup.rs/) or by using the provided nix flake.
+
 ## Running
 
 A file of commands can be run using:
