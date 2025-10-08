@@ -217,7 +217,7 @@ impl TermT {
             TermT::Phase(phase) => AtomRInner::Phase(*phase),
             TermT::IfLet { pattern, inner } => AtomRInner::IfLet {
                 pattern: pattern.to_raw(),
-                inner: Box::new(inner.to_raw_atom()),
+                inner: Box::new(inner.to_raw_tensor()),
             },
             TermT::Gate { name, .. } => AtomRInner::Gate(name.to_owned()),
             TermT::Inverse(inner) => AtomRInner::Inverse(Box::new(inner.to_raw_atom())),

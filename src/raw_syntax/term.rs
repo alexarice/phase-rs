@@ -79,7 +79,7 @@ pub enum AtomRInner<S> {
         /// Pattern to match on in "if let"
         pattern: PatternR<S>,
         /// Body of the "if let"
-        inner: Box<AtomR<S>>,
+        inner: Box<TensorR<S>>,
     },
     /// Top level symbol, a named gate
     Gate(Name),
@@ -267,7 +267,7 @@ impl HasParser for AtomRInner<Range<usize>> {
 		_: multispace1,
 		_: "then".context(StrContext::Expected(StrContextValue::StringLiteral("then"))),
 		_: multispace1,
-		AtomR::parser)),
+		TensorR::parser)),
             )
             .map(|(pattern, inner)| AtomRInner::IfLet {
                 pattern,

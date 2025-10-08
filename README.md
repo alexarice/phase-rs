@@ -37,3 +37,8 @@ Examples of common gates (and of the syntax) can be found in [examples/gates.ph]
 ```bash
 cargo run -- --file examples/gates.ph
 ```
+The examples folder also contains programs for:
+- Grover's algorithm (for finding the element 0000)
+- QFT (up to 4 qubits)
+- GHZ state preparation
+- An example circuit translation with swap gates

@@ -3,11 +3,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    raw_syntax::{
-        PatternR, TermR,
-        pattern::PatTensorR,
-        term::{AtomR, TensorR},
-    },
+    raw_syntax::{PatternR, TermR, pattern::PatTensorR, term::TensorR},
     text::Name,
     typed_syntax::{PatternType, TermT, TermType},
 };
@@ -33,7 +29,7 @@ pub enum TypeCheckError<S> {
         /// Type of pattern
         pty: PatternType,
         /// Body term
-        t: AtomR<S>,
+        t: TensorR<S>,
         /// Type of body term
         tty: TermType,
     },
