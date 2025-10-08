@@ -79,7 +79,7 @@
 <a href=#79 id=79 data-nosnippet>79</a>        <span class="doccomment">/// Pattern to match on in "if let"
 <a href=#80 id=80 data-nosnippet>80</a>        </span>pattern: PatternR&lt;S&gt;,
 <a href=#81 id=81 data-nosnippet>81</a>        <span class="doccomment">/// Body of the "if let"
-<a href=#82 id=82 data-nosnippet>82</a>        </span>inner: Box&lt;AtomR&lt;S&gt;&gt;,
+<a href=#82 id=82 data-nosnippet>82</a>        </span>inner: Box&lt;TensorR&lt;S&gt;&gt;,
 <a href=#83 id=83 data-nosnippet>83</a>    },
 <a href=#84 id=84 data-nosnippet>84</a>    <span class="doccomment">/// Top level symbol, a named gate
 <a href=#85 id=85 data-nosnippet>85</a>    </span>Gate(Name),
@@ -267,7 +267,7 @@
 <a href=#267 id=267 data-nosnippet>267</a>		<span class="kw">_</span>: multispace1,
 <a href=#268 id=268 data-nosnippet>268</a>		<span class="kw">_</span>: <span class="string">"then"</span>.context(StrContext::Expected(StrContextValue::StringLiteral(<span class="string">"then"</span>))),
 <a href=#269 id=269 data-nosnippet>269</a>		<span class="kw">_</span>: multispace1,
-<a href=#270 id=270 data-nosnippet>270</a>		AtomR::parser)),
+<a href=#270 id=270 data-nosnippet>270</a>		TensorR::parser)),
 <a href=#271 id=271 data-nosnippet>271</a>            )
 <a href=#272 id=272 data-nosnippet>272</a>            .map(|(pattern, inner)| AtomRInner::IfLet {
 <a href=#273 id=273 data-nosnippet>273</a>                pattern,
