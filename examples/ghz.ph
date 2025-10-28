@@ -1,3 +1,5 @@
+// 5-qubit GHZ preparation circuit from Example 5
+
 gate Z = if let |1> then -1,
 gate X = if let |-> then -1,
 gate S = sqrt(Z),

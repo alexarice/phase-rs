@@ -7,6 +7,7 @@ gate R2 = if let |1> then i,
 gate R3 = if let |1> then ph(0.25pi),
 gate R4 = if let |1> then ph(0.125pi),
 
+// Quantum fourier transform on 0 to 4 qubits (see section 4.3)
 gate QFT0 = id0,
 gate QFT1 = H x id0; if let |1> x id0 then id0; id x QFT0,
 gate QFT2 = H x id; if let |1> x id1 then R2; id x QFT1,
