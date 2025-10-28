@@ -30,7 +30,7 @@ pub struct TermRInner<S> {
 }
 
 impl<S> ToDoc for TermRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::intersperse(
             self.terms.iter().map(TensorR::to_doc),
             RcDoc::text(";").append(RcDoc::line()),
@@ -51,7 +51,7 @@ pub struct TensorRInner<S> {
 }
 
 impl<S> ToDoc for TensorRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::intersperse(
             self.terms.iter().map(AtomR::to_doc),
             RcDoc::line().append("x "),
@@ -90,7 +90,7 @@ pub enum AtomRInner<S> {
 }
 
 impl<S> ToDoc for AtomRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         match self {
             AtomRInner::Brackets(term) => RcDoc::text("(")
                 .append(RcDoc::line().append(term.to_doc()).nest(2))
@@ -125,13 +125,13 @@ impl<S: Span> TermR<S> {
     /// Typecheck a raw term in given environment
     /// If `check_sqrt` is not `None`, then checks that the term is "composition free"
     pub fn check(&self, env: &Env, check_sqrt: Option<&S>) -> Result<TermT, TypeCheckError<S>> {
-        if let Some(span) = check_sqrt {
-            if self.inner.terms.len() != 1 {
-                return Err(TypeCheckError::TermNotRootable {
-                    tm: self.clone(),
-                    span_of_root: span.clone(),
-                });
-            }
+        if let Some(span) = check_sqrt
+            && self.inner.terms.len() != 1
+        {
+            return Err(TypeCheckError::TermNotRootable {
+                tm: self.clone(),
+                span_of_root: span.clone(),
+            });
         }
         let mut term_iter = self.inner.terms.iter();
         let mut raw = term_iter.next().unwrap();

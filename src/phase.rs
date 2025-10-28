@@ -50,7 +50,7 @@ impl Phase {
 }
 
 impl ToDoc for Phase {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         match self {
             Phase::Angle(a) => RcDoc::text(format!("ph({a}pi)")),
             Phase::MinusOne => RcDoc::text("-1"),

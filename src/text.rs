@@ -18,7 +18,7 @@ use winnow::{
 /// Trait for types which can be pretty-printed
 pub trait ToDoc {
     /// Produce an `RcDoc` for pretty-printing.
-    fn to_doc(&self) -> RcDoc;
+    fn to_doc(&self) -> RcDoc<'_>;
 }
 
 /// Trait for types which can be parsed
@@ -53,7 +53,7 @@ pub struct Spanned<S, T> {
 }
 
 impl<S, T: ToDoc> ToDoc for Spanned<S, T> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         self.inner.to_doc()
     }
 }
@@ -104,7 +104,7 @@ impl Display for Name {
 }
 
 impl ToDoc for Name {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::text(&self.0)
     }
 }

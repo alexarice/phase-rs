@@ -29,7 +29,7 @@ pub struct PatternRInner<S> {
 }
 
 impl<S> ToDoc for PatternRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::intersperse(
             self.patterns.iter().map(PatTensorR::to_doc),
             RcDoc::line().append(". "),
@@ -50,7 +50,7 @@ pub struct PatTensorRInner<S> {
 }
 
 impl<S> ToDoc for PatTensorRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::intersperse(
             self.patterns.iter().map(PatAtomR::to_doc),
             RcDoc::line().append("x "),
@@ -76,7 +76,7 @@ pub enum PatAtomRInner<S> {
 }
 
 impl<S> ToDoc for PatAtomRInner<S> {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         match self {
             PatAtomRInner::Brackets(pattern) => RcDoc::text("(")
                 .append(RcDoc::line().append(pattern.to_doc()).nest(2))

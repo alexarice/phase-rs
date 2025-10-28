@@ -86,7 +86,7 @@ impl CompKetState {
 }
 
 impl ToDoc for CompKetState {
-    fn to_doc(&self) -> RcDoc {
+    fn to_doc(&self) -> RcDoc<'_> {
         RcDoc::text("|")
             .append(self.0.iter().map(KetState::to_char).collect::<String>())
             .append(">")
