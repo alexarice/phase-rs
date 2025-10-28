@@ -86,7 +86,7 @@
 <a href=#86 id=86 data-nosnippet>86</a>}
 <a href=#87 id=87 data-nosnippet>87</a>
 <a href=#88 id=88 data-nosnippet>88</a><span class="kw">impl </span>ToDoc <span class="kw">for </span>CompKetState {
-<a href=#89 id=89 data-nosnippet>89</a>    <span class="kw">fn </span>to_doc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RcDoc {
+<a href=#89 id=89 data-nosnippet>89</a>    <span class="kw">fn </span>to_doc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RcDoc&lt;<span class="lifetime">'_</span>&gt; {
 <a href=#90 id=90 data-nosnippet>90</a>        RcDoc::text(<span class="string">"|"</span>)
 <a href=#91 id=91 data-nosnippet>91</a>            .append(<span class="self">self</span>.<span class="number">0</span>.iter().map(KetState::to_char).collect::&lt;String&gt;())
 <a href=#92 id=92 data-nosnippet>92</a>            .append(<span class="string">"&gt;"</span>)
