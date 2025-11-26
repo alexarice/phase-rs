@@ -1,1 +1,0 @@
-searchState.loadedDescShard("atomic_wait", 0, "Cross platform atomic wait and wake (aka futex) …\nIf the value is <code>value</code>, wait until woken up.\nWake all threads that are waiting on this atomic.\nWake one thread that is waiting on this atomic.")
